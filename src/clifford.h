@@ -28,7 +28,7 @@
   // BASIS1: Basis used for BMW-c lattices
   // BASIS2: Basis used for QCDSF lattices
   // BASIS3: Basis used in the QOPQDP Code
-  #define BASIS0 // change here
+  #define BASIS2 // change here
   
   enum { T, Z, Y, X };
   
