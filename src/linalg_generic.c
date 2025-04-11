@@ -21,9 +21,11 @@
 
 #include "main.h"
 
+#ifdef SSE
 #include "sse_float_intrinsic.h"
 #include "sse_linalg.h"
 #include "sse_linalg_PRECISION.h"
+#endif
 
 #ifndef OPTIMIZED_LINALG_PRECISION
 complex_PRECISION global_inner_product_PRECISION( vector_PRECISION phi, vector_PRECISION psi, int start, int end, level_struct *l, struct Thread *threading ) {
