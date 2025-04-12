@@ -105,12 +105,6 @@ void dirac_setup( config_double hopp, config_double clover, level_struct *l ) {
     printf0("hopping term ");
     
     calc_plaq( U2, l );
-    
-#ifndef HAVE_LIME
-    // The antipbc are not applyed during the conf reading as done in io.c
-    if(g.anti_pbc)
-      apply_anti_pbc( U2, l );
-#endif
 
     SU3_storage_free( &U2, l );
   }
@@ -124,12 +118,6 @@ void dirac_setup( config_double hopp, config_double clover, level_struct *l ) {
   if ( clover )
     printf0("clover term ");
   calc_plaq( U, l );
-  
-#ifdef HAVE_LIME
-  // The antipbc are not applyed during the conf reading as done in io.c
-  if(g.anti_pbc)
-    apply_anti_pbc( U, l );
-#endif
   
   // employ open boundary conditions after calculating clover term
   int local_spacial_dimension = l->local_lattice[Z]*l->local_lattice[Y]*l->local_lattice[X];

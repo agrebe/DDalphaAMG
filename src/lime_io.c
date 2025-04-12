@@ -228,7 +228,7 @@ void lime_read_conf( double *input_data, char *input_name, double *conf_plaq ) {
    * - double *conf_plaq: Holds the plaquette of given configuration.                            
    *********************************************************************************/
   #ifdef HAVE_LIME
-  int t, z, y, x, i, k, desired_rank,
+  int t, z, y, x, i, j, k, desired_rank,
   *gl=g.global_lattice[0], *ll=g.local_lattice[0], read_size = 4*18*ll[X], precision=64;
   double *input_data_pt, plaq;
   float *float_buffer = NULL;
@@ -312,6 +312,13 @@ void lime_read_conf( double *input_data, char *input_name, double *conf_plaq ) {
             MPI_Recv( input_data_pt, read_size, MPI_DOUBLE, 0, k, g.comm_cart, MPI_STATUS_IGNORE );
             
             swap_spin_in_conf(input_data_pt, read_size);
+            if ( t == gl[T]-1 ) {
+              if ( g.anti_pbc ) {
+                for ( j=0; j<read_size; j+=4*18 )
+                  for ( i=0; i<18; i++ )
+                    (input_data_pt+j+T*18)[i] = -(input_data_pt+j+T*18)[i];
+              }
+            }
             
             input_data_pt += read_size;
           }
