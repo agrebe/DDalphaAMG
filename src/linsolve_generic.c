@@ -856,8 +856,21 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   }
   END_MASTER(threading)
   SYNC_MASTER_TO_ALL(threading)
-  for( i=0; i<=j; i++ )
-    vector_PRECISION_saxpy( w, w, V[i], -H[j][i], start, end, l );
+
+  // subtract other vectors from last one
+  // equivalent to
+  // for( i=0; i<=j; i++ )
+  //   vector_PRECISION_saxpy( w, w, V[i], -H[j][i], start, end, l );
+  int thread = omp_get_thread_num();
+  if (thread == 0 && start != end )
+  PROF_PRECISION_START( _LA8 );
+  for (int k = start; k < end; k ++) {
+    for (int i = 0; i <= j; i ++)
+      w[k] -= V[i][k] * H[j][i];
+  }
+  if( thread == 0 && start != end )
+  PROF_PRECISION_STOP( _LA8, (double)(end-start)/(double)l->inner_vector_size );
+
   
 #ifdef REORTH
   // re-orthogonalization

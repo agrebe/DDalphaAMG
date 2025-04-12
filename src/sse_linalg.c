@@ -733,26 +733,27 @@ void process_multi_inner_product_double( int count, complex_double *results, vec
 
   if ( l->depth == 0 ) {
     compute_core_start_end_custom(start, end, &thread_start, &thread_end, l, threading, 12);
+    __m128d result_re [count];
+    __m128d result_im [count];
     for(int c=0; c<count; c++) {
-      __m128d result_re = _mm_setzero_pd();
-      __m128d result_im = _mm_setzero_pd();
-      for ( i=thread_start; i<thread_end; ) {
-        FOR6(
-          {
-            __m128d phi_re; __m128d phi_im;
-            __m128d pdi_re; __m128d pdi_im;
-            
-            // deinterleave complex numbers into 4 real parts and 4 imag parts        
-            sse_complex_deinterleaved_load_pd( (double*)(phi[c]+i), &phi_re, &phi_im );
-            sse_complex_deinterleaved_load_pd( (double*)(psi+i), &pdi_re, &pdi_im );
-
-            cfmadd_conj_pd(phi_re, phi_im, pdi_re, pdi_im, &result_re, &result_im);
-            i+=SIMD_LENGTH_double;
-          }
-        )
-      }
-      results[c] += sse_reduce_add_pd(result_re) + I*sse_reduce_add_pd(result_im);
+      result_re[c] = _mm_setzero_pd();
+      result_im[c] = _mm_setzero_pd();
     }
+    for ( i=thread_start; i<thread_end; ) {
+      for(int c=0; c<count; c++) {
+        __m128d phi_re; __m128d phi_im;
+        __m128d pdi_re; __m128d pdi_im;
+        
+        // deinterleave complex numbers into 4 real parts and 4 imag parts        
+        sse_complex_deinterleaved_load_pd( (double*)(phi[c]+i), &phi_re, &phi_im );
+        sse_complex_deinterleaved_load_pd( (double*)(psi+i), &pdi_re, &pdi_im );
+
+        cfmadd_conj_pd(phi_re, phi_im, pdi_re, pdi_im, &result_re[c], &result_im[c]);
+      }
+      i+=SIMD_LENGTH_double;
+    }
+    for(int c=0; c<count; c++)
+      results[c] += sse_reduce_add_pd(result_re[c]) + I*sse_reduce_add_pd(result_im[c]);
   } else {
     compute_core_start_end_custom(start, end, &thread_start, &thread_end, l, threading, 2);
     for(int c=0; c<count; c++) {
