@@ -79,7 +79,6 @@ static void spin2and3_clover_PRECISION( vector_PRECISION eta, vector_PRECISION p
   }
 }
 
-#if !defined(OPTIMIZED_NEIGHBOR_COUPLING_PRECISION) && !defined(OPTIMIZED_SELF_COUPLING_PRECISION)
 void block_d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, int start, schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
 
   START_UNTHREADED_FUNCTION(threading)
@@ -152,10 +151,8 @@ void block_d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, 
   }
   END_UNTHREADED_FUNCTION(threading)
 }
-#endif
 
 
-#if !defined(OPTIMIZED_NEIGHBOR_COUPLING_PRECISION) && !defined(OPTIMIZED_SELF_COUPLING_PRECISION)
 void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
   
   int n = l->num_inner_lattice_sites, *neighbor = op->neighbor_table, start, end;
@@ -275,7 +272,6 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
   
   SYNC_MASTER_TO_ALL(threading)
 }
-#endif
 
 
 void d_plus_clover_dagger_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {  
@@ -474,11 +470,7 @@ void operator_updates_PRECISION( level_struct *l ) {
     }
     
     if ( l->level > 0 ) {
-#ifndef INTERPOLATION_SETUP_LAYOUT_OPTIMIZED_PRECISION
       coarse_operator_PRECISION_setup( l->is_PRECISION.interpolation, l );
-#else
-      coarse_operator_PRECISION_setup_vectorized( l->is_PRECISION.operator, l, no_threading );
-#endif
       conf_PRECISION_gather( &(l->next_level->s_PRECISION.op), &(l->next_level->op_PRECISION), l->next_level );
     }
     

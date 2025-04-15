@@ -21,20 +21,6 @@
 
 #ifndef IO_HEADER
   #define IO_HEADER
-#ifdef HAVE_HDF5
-#include "hdf5.h"
-#define ROOTGROUPNAME "/rqcd"
-#define EIGENMODEGROUPNAME "eigenmodes"
-  typedef struct Hdf5_fileinfo {
-    char* filename;
-    hid_t file_id, rootgroup_id, configgroup_id, eigenmodegroup_id, thiseigenmodegroup_id;
-    unsigned int isOpen;
-    int mode;
-    double ioTime;
-  } Hdf5_fileinfo;
-
-  extern Hdf5_fileinfo h5info;
-#endif
   
   void byteswap( char *in );  
   void byteswap8( char *in );  
@@ -57,10 +43,4 @@
     }
   }
   
-#ifdef HAVE_HDF5
-  unsigned int stepIntoEigenmode( int index );
-  unsigned int initFile(  char *filename, const int mode, level_struct *l );
-  void closeFile();
-
-#endif
 #endif

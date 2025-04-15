@@ -43,11 +43,6 @@ void operator_PRECISION_init( operator_PRECISION_struct *op ) {
   }
   op->c.comm = 1;
   op->buffer = NULL;
-#ifdef VECTORIZE_COARSE_OPERATOR_PRECISION
-  op->D_vectorized = NULL;
-  op->D_transformed_vectorized = NULL;
-  op->clover_vectorized = NULL;
-#endif
 }
 
 
@@ -107,11 +102,6 @@ void operator_PRECISION_alloc( operator_PRECISION_struct *op, const int type, le
   MALLOC( op->neighbor_table, int, (l->depth==0?4:5)*l->num_inner_lattice_sites );
   MALLOC( op->backward_neighbor_table, int, (l->depth==0?4:5)*l->num_inner_lattice_sites );
   MALLOC( op->translation_table, int, l->num_inner_lattice_sites );
-#ifdef SSE
-  if ( l->depth == 0 ) {
-    MALLOC( op->oe_clover_vectorized, PRECISION, 144*l->num_inner_lattice_sites );    
-  }
-#endif
   
   operator_PRECISION_alloc_projection_buffers( op, l );
   
@@ -168,11 +158,6 @@ void operator_PRECISION_free( operator_PRECISION_struct *op, const int type, lev
   FREE( op->neighbor_table, int, (l->depth==0?4:5)*l->num_inner_lattice_sites );
   FREE( op->backward_neighbor_table, int, (l->depth==0?4:5)*l->num_inner_lattice_sites );
   FREE( op->translation_table, int, l->num_inner_lattice_sites );
-#ifdef SSE
-  if ( l->depth == 0 ) {
-    FREE( op->oe_clover_vectorized, PRECISION, 144*l->num_inner_lattice_sites );    
-  }
-#endif
   
   operator_PRECISION_free_projection_buffers( op, l );
   

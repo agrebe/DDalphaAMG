@@ -22,24 +22,11 @@
 #include "main.h"
 
 global_struct g;
-#ifdef HAVE_HDF5
-Hdf5_fileinfo h5info;
-#endif
 struct common_thread_data *commonthreaddata;
 struct Thread *no_threading;
 
 int main( int argc, char **argv ) {
     
-#ifdef HAVE_HDF5
-  h5info.filename=NULL;
-  h5info.file_id=-1; 
-  h5info.rootgroup_id=-1; 
-  h5info.configgroup_id=-1;
-  h5info.eigenmodegroup_id=-1;
-  h5info.thiseigenmodegroup_id=-1;
-  h5info.isOpen=0;
-  h5info.mode=-1;
-#endif
   level_struct l;
   config_double hopp = NULL, clov = NULL;
   

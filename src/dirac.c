@@ -105,12 +105,6 @@ void dirac_setup( config_double hopp, config_double clover, level_struct *l ) {
     printf0("hopping term ");
     
     calc_plaq( U2, l );
-    
-#ifndef HAVE_LIME
-    // The antipbc are not applyed during the conf reading as done in io.c
-    if(g.anti_pbc)
-      apply_anti_pbc( U2, l );
-#endif
 
     SU3_storage_free( &U2, l );
   }
@@ -124,12 +118,6 @@ void dirac_setup( config_double hopp, config_double clover, level_struct *l ) {
   if ( clover )
     printf0("clover term ");
   calc_plaq( U, l );
-  
-#ifdef HAVE_LIME
-  // The antipbc are not applyed during the conf reading as done in io.c
-  if(g.anti_pbc)
-    apply_anti_pbc( U, l );
-#endif
   
   // employ open boundary conditions after calculating clover term
   int local_spacial_dimension = l->local_lattice[Z]*l->local_lattice[Y]*l->local_lattice[X];
@@ -551,18 +539,6 @@ void SU3_storage_free( SU3_storage *U, level_struct *l ) {
     free((*U)[t]);
   }
   free((*U));
-}
-
-void apply_anti_pbc( SU3_storage U, level_struct *l ) {
-  int t, z, y, x;
-  if(g.my_coords[0]==(l->global_lattice[T]/l->local_lattice[T]-1)) {
-    t=l->local_lattice[0];
-    for (z=1; z<l->local_lattice[1]+1; z++)
-      for (y=1; y<l->local_lattice[2]+1; y++)
-        for (x=1; x<l->local_lattice[3]+1; x++)
-          scaleMat(U[t][z][y][x][0],U[t][z][y][x][0],-1.0,3);
-  }
-  SU3_ghost_update( &U, l );
 }
 
 void calc_plaq( SU3_storage U, level_struct *l ) {

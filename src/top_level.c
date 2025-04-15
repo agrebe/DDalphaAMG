@@ -135,9 +135,60 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
   solution = ((vector_double *)threading->workspace)[0];
   source   = ((vector_double *)threading->workspace)[1];
   
-  rhs_define( source, l, threading );
-  
-  solve( solution, source, l, threading );
+  int Lx = g.local_lattice[0][X];
+  int Ly = g.local_lattice[0][Y];
+  int Lz = g.local_lattice[0][Z];
+  int Lt = g.local_lattice[0][T];
+  double * pion_correlator = malloc(sizeof(double) * Lt);
+  START_LOCKED_MASTER(threading)
+  for (int t = 0; t < Lt; t ++) pion_correlator[t] = 0;
+  END_LOCKED_MASTER(threading)
+
+  for (int j = 0; j < 12; j ++) {
+    rhs_define( source, l, threading );
+    if ( g.my_rank == 0 ) {
+      START_LOCKED_MASTER(threading)
+      source[0] = 0;
+      source[j] = 1.0;
+      END_LOCKED_MASTER(threading)
+    }
+
+    solve( solution, source, l, threading );
+
+    // compute pion correlator
+    // do this on one thread
+    START_LOCKED_MASTER(threading)
+//    printf("First 24 entries in solution: \n");
+//    for (int i = 0; i < 24; i ++)
+//      printf("%.6e %.6e\n", creal(solution[i]), cimag(solution[i]));
+    printf("First entry in solution: %.5e\n", creal(solution[0]));
+    double * correlator = malloc(sizeof(double) * Lt);
+    for (int t = 0; t < Lt; t ++) correlator[t] = 0;
+    for (int x = 0; x < Lx; x ++)
+      for (int y = 0; y < Ly; y ++)
+        for (int z = 0; z < Lz; z ++)
+          for (int t = 0; t < Lt; t ++) {
+            //int location = ((x * Lx + y) * Ly + z) * Lz + t;
+            int location = ((t * Lz + z) * Ly + y) * Lx + x;
+            for (int i = 0; i < 24; i ++) {
+              double value = ((double *) solution)[location * 24 + i];
+//              if (value != 0)
+//                printf("Nonzero value at (%d, %d, %d, %d, %d): %e\n", x, y, z, t, i, value);
+              correlator[t] += value * value;
+              pion_correlator[t] += value * value;
+            }
+          }
+    for (int t = 0; t < Lt; t ++)
+      printf("C[%d] = %e\n", t, correlator[t]);
+    free(correlator);
+    END_LOCKED_MASTER(threading)
+  }
+  START_LOCKED_MASTER(threading)
+  for (int t = 0; t < Lt; t ++)
+    printf("C[%d] = %e\n", t, pion_correlator[t]);
+  END_LOCKED_MASTER(threading)
+  free(pion_correlator);
+
 
   START_LOCKED_MASTER(threading)
   FREE( solution, complex_double, l->inner_vector_size );

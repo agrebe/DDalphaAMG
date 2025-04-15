@@ -21,8 +21,6 @@
 
 #include "main.h"
 
-#if ( !defined( SSE ) || !defined( INTERPOLATION_OPERATOR_LAYOUT_OPTIMIZED_PRECISION ) )
-
 void interpolation_PRECISION_alloc( level_struct *l ) {
   
   int k, n = l->num_eig_vect;
@@ -205,5 +203,3 @@ void restrict_PRECISION( vector_PRECISION phi_c, vector_PRECISION phi, level_str
   END_LOCKED_MASTER(threading)
   PROF_PRECISION_STOP( _PR, 1, threading );
 }
-
-#endif

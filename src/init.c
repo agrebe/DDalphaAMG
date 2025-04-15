@@ -631,12 +631,6 @@ void read_global_info( FILE *in ) {
   read_parameter( &save_pt, "number of openmp threads:", "%d", 1, in, _DEFAULT_SET );
 }
 
-void set_global_info( struct dd_alpha_amg_parameters *amg_params ) {
-  g.num_levels = amg_params->number_of_levels;
-  g.anti_pbc = 0;
-}
-
-
 int shortest_dir( int* data ) {
   int min=0, mu;
   for ( mu=1; mu<4; mu++ )
@@ -804,25 +798,9 @@ void read_geometry_data( FILE *in, int ls ) {
     save_pt = &(g.num_eig_vect[i]);
     if ( i==0 ) g.num_eig_vect[i] = 20;
     else
-#ifdef SSE
-      g.num_eig_vect[i] = MAX(4,((int)(1.5*g.num_eig_vect[0])-(((int)(1.5*g.num_eig_vect[0]))%SIMD_LENGTH_float)) );
-#else
       g.num_eig_vect[i] = 1.5*g.num_eig_vect[0];
-#endif
     read_parameter( &save_pt, inputstr, "%d", 1, in, _DEFAULT_SET );
         
-  }
-}
-
-void set_geometry_data( struct dd_alpha_amg_parameters *amg_params ) {
-  int ls = MAX(g.num_levels, 2);
-  for ( int i=0; i<ls; i++ ) {
-    for ( int mu=0; mu<4; mu++ ) {
-      g.global_lattice[i][mu] = amg_params->global_lattice[i][3-mu];
-      g.local_lattice[i][mu]  = amg_params->local_lattice[i][3-mu];
-      g.block_lattice[i][mu]  = amg_params->block_lattice[i][3-mu];
-    }
-    g.num_eig_vect[i]     = amg_params->mg_basis_vectors[i];
   }
 }
 
@@ -872,34 +850,6 @@ void read_solver_parameters( FILE *in, level_struct *l ) {
   } else 
     srand( 1000*g.my_rank );
 }
-
-void set_solver_parameters( struct dd_alpha_amg_parameters *amg_params, level_struct *l ) {
-
-  g.mixed_precision = 1;
-  g.interpolation = 2;
-  g.randomize = 0;
-  g.coarse_iter    = amg_params->coarse_grid_iterations;
-  g.coarse_restart = amg_params->coarse_grid_maximum_number_of_restarts;
-  g.coarse_tol     = amg_params->coarse_grid_tolerance;
-  g.odd_even = 1;
-
-  l->real_shift    = amg_params->solver_mass;
-  g.setup_m0       = amg_params->setup_mass;
-  g.csw            = amg_params->c_sw;
-
-  g.method = 2;
-  l->n_cy = 1;
-  // outer solver in MG not used not used, -1 should disable allocations
-  g.restart = -1;
-  g.max_restart = 100;
-  g.tol = 1e-10;
-  g.print = 1;
-
-  // setting status to maximum to force initial setup
-  g.mg_setup_status.gauge_updates_since_last_setup = amg_params->discard_setup_after;
-  g.mg_setup_status.gauge_updates_since_last_setup_update = amg_params->update_setup_after;
-}
-
 
 void read_testvector_io_data_if_necessary( FILE *in ) {
 
@@ -966,13 +916,6 @@ void validate_parameters( int ls, level_struct *l ) {
   int i;
   int mu;
   
-#ifdef SSE
-  if ( !g.odd_even )
-    warning0("The SSE implementation is based on the odd-even preconditioned code.\
-    \n         Switch on odd-even preconditioning in the input file.\n");
-  ASSERT( g.odd_even );
-#endif
-  
   if ( g.method == 5 && g.interpolation != 0 ) {
     warning0("Multigrid with BiCGstab smoothing is not supported.\n         Switching to FGMRES preconditioned with BiCGstab (g.interpolation=0).\n");
     g.interpolation = 0;
@@ -996,11 +939,6 @@ void validate_parameters( int ls, level_struct *l ) {
       ASSERT( DIVIDES( g.block_lattice[i][mu], g.local_lattice[i][mu] ) );
       ASSERT( DIVIDES( g.global_lattice[i][mu]/g.global_lattice[i+1][mu], g.local_lattice[i][mu] ) ); 
       ASSERT( DIVIDES( g.block_lattice[i][mu], g.global_lattice[i][mu]/g.global_lattice[i+1][mu] ) );
-#ifdef SSE
-      if ( ! g.block_lattice[i][mu] == g.global_lattice[i][mu]/g.global_lattice[i+1][mu] )
-        warning0("when using SSE, Schwarz block size and aggregate size have to match.\n");
-      ASSERT( g.block_lattice[i][mu] == g.global_lattice[i][mu]/g.global_lattice[i+1][mu] );
-#endif
     }
     
   for ( i=0; i<g.num_levels-2; i++ )
@@ -1039,10 +977,6 @@ void validate_parameters( int ls, level_struct *l ) {
   ASSERT( IMPLIES( g.kcycle && g.method > 0, g.kcycle_max_restart > 0 ) );
   ASSERT( IMPLIES( g.kcycle && g.method > 0, 0 < g.kcycle_tol && g.kcycle_tol < 1 ) );
   
-#ifdef SSE
-  ASSERT( g.mixed_precision );
-//   ASSERT( DIVIDES( 4, g.num_eig_vect[0] ) );
-#endif
 }
 
 void allocate_for_global_struct_after_read_global_info( int ls ) {
@@ -1136,16 +1070,6 @@ void lg_in( char *inputfile, level_struct *l ) {
   fclose(in);
 }
 
-void update_parameters_in_global_struct( const struct dd_alpha_amg_parameters *amg_params ) {
-  // changes only parameters that can also be changed after initial setup
-  int ls = MAX(g.num_levels, 2);
-  for ( int i=0; i<ls; i++ ) {
-    g.post_smooth_iter[i] = amg_params->post_smooth_iterations[i];
-    g.block_iter[i]       = amg_params->post_smooth_block_iterations[i];
-    g.setup_iter[i]       = amg_params->setup_iterations[i];
-  }
-  g.mass_for_next_solve = amg_params->solver_mass;
-}
 void update_parameters_in_level_structs( level_struct *l ) {
 
   l->post_smooth_iter = g.post_smooth_iter[l->depth];
@@ -1155,28 +1079,4 @@ void update_parameters_in_level_structs( level_struct *l ) {
   // for some reason coarser levels are initialized late, so we cannot always recurse here
   if ( l->level > 0 && l->next_level != NULL )
     update_parameters_in_level_structs( l->next_level );
-}
-
-void set_dd_alpha_amg_parameters( struct dd_alpha_amg_parameters *amg_params, level_struct *l ) {
-
-  g.amg_params = *amg_params;
-  set_default_global_info();
-  set_global_info( amg_params );
-  int ls = MAX(g.num_levels,2);
-  allocate_for_global_struct_after_read_global_info( ls );
-
-  set_geometry_data( amg_params );
-  update_parameters_in_global_struct( amg_params );
-  set_solver_parameters( amg_params, l );
-
-  set_level_and_global_structs_according_to_global_struct( l );
-
-  set_kcycle_data();
-
-  validate_parameters( ls, l );
-}
-
-void update_dd_alpha_amg_parameters( const struct dd_alpha_amg_parameters *amg_params, level_struct *l ) {
-  update_parameters_in_global_struct( amg_params );
-  update_parameters_in_level_structs( l );
 }

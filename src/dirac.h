@@ -42,7 +42,6 @@ struct Thread;
   void mat_free( complex_double **A, int n );
   void zeroMat( complex_double *A, int n );
   
-  void apply_anti_pbc( SU3_storage U, level_struct *l );
   void calc_plaq( SU3_storage U, level_struct *l );
   
   void Qdiff( complex_double *q_store, int mu, int nu, int t, int z, int y, int x, SU3_storage U );

@@ -36,17 +36,6 @@ void coarse_operator_PRECISION_free( level_struct *l ) {
   
   operator_PRECISION_free( &(l->next_level->op_PRECISION), _ORDINARY, l->next_level );
   
-#ifdef VECTORIZE_COARSE_OPERATOR_PRECISION
-  operator_PRECISION_struct *op = &(l->next_level->s_PRECISION.op);
-  if( op->D_vectorized != NULL ) {
-    int n2 = 2*l->next_level->num_lattice_sites-l->next_level->num_inner_lattice_sites, n = l->next_level->num_inner_lattice_sites;
-    int column_offset = SIMD_LENGTH_PRECISION*((l->next_level->num_lattice_site_var+SIMD_LENGTH_PRECISION-1)/SIMD_LENGTH_PRECISION);
-    // 2 is for complex, 4 is for 4 directions
-    FREE_HUGEPAGES( op->D_vectorized, OPERATOR_TYPE_PRECISION, 2*4*l->next_level->num_lattice_site_var*column_offset*n2 );
-    FREE_HUGEPAGES( op->D_transformed_vectorized, OPERATOR_TYPE_PRECISION, 2*4*l->next_level->num_lattice_site_var*column_offset*n2 );
-    FREE_HUGEPAGES( op->clover_vectorized, OPERATOR_TYPE_PRECISION, 2*l->next_level->num_lattice_site_var*column_offset*n );
-  }
-#endif
 }
 
 
@@ -204,7 +193,6 @@ void set_coarse_neighbor_coupling_PRECISION( vector_PRECISION spin_0_1, vector_P
   }
 }
 
-#ifndef VECTORIZE_COARSE_OPERATOR_PRECISION
 void coarse_block_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi, int start, schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
   
   START_UNTHREADED_FUNCTION(threading)
@@ -233,7 +221,6 @@ void coarse_block_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 
   END_UNTHREADED_FUNCTION(threading)
 }
-#endif
 
 
 void coarse_aggregate_self_couplings_PRECISION( vector_PRECISION eta1, vector_PRECISION eta2, vector_PRECISION phi,
@@ -344,9 +331,7 @@ void coarse_spinwise_self_couplings_PRECISION( vector_PRECISION eta1, vector_PRE
 }
 
 
-#ifndef VECTORIZE_COARSE_OPERATOR_PRECISION
 void coarse_operator_PRECISION_set_couplings( operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) { }
-#endif
 
 void coarse_gamma5_PRECISION( vector_PRECISION eta, vector_PRECISION phi, int start, int end, level_struct *l ) {
   
@@ -379,7 +364,6 @@ void coarse_gamma5_PRECISION( vector_PRECISION eta, vector_PRECISION phi, int st
   }
 }
 
-#ifndef VECTORIZE_COARSE_OPERATOR_PRECISION
 void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op,
                                       level_struct *l, struct Thread *threading ) {
   
@@ -392,7 +376,6 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
   coarse_hopping_term_PRECISION( eta, phi, op, _FULL_SYSTEM, l, threading );
   PROF_PRECISION_STOP( _NC, 1, threading );
 }
-#endif
 
 void g5D_apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op,
                                           level_struct *l, struct Thread *threading ) {
@@ -430,20 +413,8 @@ void coarse_operator_PRECISION_test_routine( level_struct *l, struct Thread *thr
     vp2 = vp1 + vs; vp3 = vp2 + vs; vp4 = vp3 + vs; vc2 = vc1 + cvs; vc3 = vc2 + cvs; 
 
     START_LOCKED_MASTER(threading)
-#ifdef INTERPOLATION_OPERATOR_LAYOUT_OPTIMIZED_PRECISION
-    double norm = 0.0;
-    double dot = 0.0;
-    float *op = (float *)l->is_PRECISION.operator;
-    float *op2 = (float *)(l->is_PRECISION.operator+0*SIMD_LENGTH_PRECISION*l->vector_size)+1;
-    for ( int i=0; i<l->inner_vector_size; i++ )
-      norm += (op[2*i*SIMD_LENGTH_PRECISION+0] + I*op[2*i*SIMD_LENGTH_PRECISION+SIMD_LENGTH_PRECISION])*conj(op[2*i*SIMD_LENGTH_PRECISION+0] + I*op[2*i*SIMD_LENGTH_PRECISION+SIMD_LENGTH_PRECISION]);
-    for ( int i=0; i<l->inner_vector_size; i++ )
-      dot += (op[2*i*SIMD_LENGTH_PRECISION+0] + I*op[2*i*SIMD_LENGTH_PRECISION+SIMD_LENGTH_PRECISION])*conj(op2[2*i*SIMD_LENGTH_PRECISION+0] + I*op2[2*i*SIMD_LENGTH_PRECISION+SIMD_LENGTH_PRECISION]);
-    diff = dot/norm;
-#else
     diff = global_inner_product_PRECISION( l->is_PRECISION.interpolation[0], l->is_PRECISION.interpolation[1], 0, ivs, l, no_threading )
          / global_norm_PRECISION( l->is_PRECISION.interpolation[0], 0, ivs, l, no_threading );
-#endif
     printf0("depth: %d, correctness of block_gram_schmidt: %le\n", l->depth, cabs(diff) );
     
     if ( !l->next_level->idle )

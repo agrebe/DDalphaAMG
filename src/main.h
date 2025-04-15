@@ -29,12 +29,11 @@
 #include <time.h>
 #include <stdarg.h>
 
+#include "dd_alpha_amg_setup_status.h"
+
 #ifdef JUROPA
 #include <mkl.h>
 #endif
-
-#include "dd_alpha_amg_parameters.h"
-#include "dd_alpha_amg_setup_status.h"
 
 #ifndef MAIN_HEADER
   #define MAIN_HEADER
@@ -84,16 +83,6 @@
   #define abs_float fabs
   #define abs_double abs
   
-#ifdef SSE
-  #define MALLOC( variable, kind, length ) do{ if ( variable != NULL ) { \
-  printf0("malloc of \"%s\" failed: pointer is not NULL (%s:%d).\n", #variable, __FILE__, __LINE__ ); } \
-  if ( (length) > 0 ) { variable = (kind*) memalign( 64, sizeof(kind) * (length) ); } \
-  if ( variable == NULL && (length) > 0 ) { \
-  error0("malloc of \"%s\" failed: no memory allocated (%s:%d), current memory used: %lf GB.\n", \
-  #variable, __FILE__, __LINE__, g.cur_storage/1024.0 ); } \
-  g.cur_storage += (sizeof(kind) * (length))/(1024.0*1024.0); \
-  if ( g.cur_storage > g.max_storage ) g.max_storage = g.cur_storage; }while(0)
-#else
   #define MALLOC( variable, kind, length ) do{ if ( variable != NULL ) { \
   printf0("malloc of \"%s\" failed: pointer is not NULL (%s:%d).\n", #variable, __FILE__, __LINE__ ); } \
   if ( (length) > 0 ) { variable = (kind*) malloc( sizeof(kind) * (length) ); } \
@@ -102,7 +91,6 @@
   #variable, __FILE__, __LINE__, g.cur_storage/1024.0 ); } \
   g.cur_storage += (sizeof(kind) * (length))/(1024.0*1024.0); \
   if ( g.cur_storage > g.max_storage ) g.max_storage = g.cur_storage; }while(0)
-#endif
 
   // allocate and deallocate macros (hugepages, aligned)
   #include <fcntl.h>
@@ -381,7 +369,6 @@
     complex_double **gamma, g5D_shift;
     var_table vt;
 
-    struct dd_alpha_amg_parameters amg_params;
     struct dd_alpha_amg_setup_status mg_setup_status;
     double mass_for_next_solve;
     
@@ -457,26 +444,9 @@
 // functions
 #include "clifford.h"
 
-#ifdef SSE
-#include "vectorization_dirac_float.h"
-#include "vectorization_dirac_double.h"
-#include "blas_vectorized.h"
-#include "sse_blas_vectorized.h"
-#include "sse_complex_float_intrinsic.h"
-#include "sse_complex_double_intrinsic.h"
-#include "sse_coarse_operator_float.h"
-#include "sse_coarse_operator_double.h"
-#include "sse_linalg_float.h"
-#include "sse_linalg_double.h"
-#include "sse_interpolation_float.h"
-#include "sse_interpolation_double.h"
-#include "sse_schwarz_float.h"
-#include "sse_schwarz_double.h"
-#else
 //no intrinsics
 #include "interpolation_float.h"
 #include "interpolation_double.h"
-#endif
 
 #include "data_float.h"
 #include "data_double.h"

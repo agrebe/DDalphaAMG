@@ -21,13 +21,6 @@
 
 #include "main.h"
 
-#ifdef SSE
-#include "sse_float_intrinsic.h"
-#include "sse_linalg.h"
-#include "sse_linalg_PRECISION.h"
-#endif
-
-#ifndef OPTIMIZED_LINALG_PRECISION
 complex_PRECISION global_inner_product_PRECISION( vector_PRECISION phi, vector_PRECISION psi, int start, int end, level_struct *l, struct Thread *threading ) {
   
   PROF_PRECISION_START( _GIP, threading );
@@ -73,7 +66,6 @@ complex_PRECISION global_inner_product_PRECISION( vector_PRECISION phi, vector_P
     return local_alpha;
   }
 }
-#endif
 
 
 complex_PRECISION process_inner_product_PRECISION( vector_PRECISION phi, vector_PRECISION psi, int start, int end, level_struct *l, struct Thread *threading ) {
@@ -105,7 +97,6 @@ complex_PRECISION process_inner_product_PRECISION( vector_PRECISION phi, vector_
 }
 
 
-#if !defined( OPTIMIZED_LINALG_PRECISION ) && !defined( __MIC__ )
 void process_multi_inner_product_PRECISION( int count, complex_PRECISION *results, vector_PRECISION *phi, vector_PRECISION psi,
     int start, int end, level_struct *l, struct Thread *threading ) {
 
@@ -154,7 +145,6 @@ void process_multi_inner_product_PRECISION( int count, complex_PRECISION *result
 
   PROF_PRECISION_STOP( _PIP, (double)(end-start)/(double)l->inner_vector_size, threading );
 }
-#endif
 
 
 complex_PRECISION local_xy_over_xx_PRECISION( vector_PRECISION phi, vector_PRECISION psi, int start, int end, level_struct *l  ) {
@@ -170,7 +160,6 @@ complex_PRECISION local_xy_over_xx_PRECISION( vector_PRECISION phi, vector_PRECI
   return numerator/denominator;
 }
 
-#ifndef OPTIMIZED_LINALG_PRECISION
 PRECISION global_norm_PRECISION( vector_PRECISION x, int start, int end, level_struct *l, struct Thread *threading ) {
   
   PROF_PRECISION_START( _GIP, threading );
@@ -217,7 +206,6 @@ PRECISION global_norm_PRECISION( vector_PRECISION x, int start, int end, level_s
     return (PRECISION)sqrt((double)local_alpha);
   }
 }
-#endif
 
 PRECISION process_norm_PRECISION( vector_PRECISION x, int start, int end, level_struct *l, struct Thread *threading ) {
      
@@ -273,7 +261,6 @@ void vector_PRECISION_minus( vector_PRECISION z, vector_PRECISION x, vector_PREC
   PROF_PRECISION_STOP( _LA2, (double)(end-start)/(double)l->inner_vector_size );
 }
 
-#ifndef OPTIMIZED_LINALG_PRECISION
 void vector_PRECISION_scale( vector_PRECISION z, vector_PRECISION x, complex_PRECISION alpha, int start, int end, level_struct *l ) {
   
   int thread = omp_get_thread_num();
@@ -285,7 +272,6 @@ void vector_PRECISION_scale( vector_PRECISION z, vector_PRECISION x, complex_PRE
   if(thread == 0 && start != end)
   PROF_PRECISION_STOP( _LA6, (double)(end-start)/(double)l->inner_vector_size );
 }
-#endif
 
 
 void vector_PRECISION_real_scale( vector_PRECISION z, vector_PRECISION x, complex_PRECISION alpha,
@@ -317,7 +303,6 @@ void vector_PRECISION_copy( vector_PRECISION z, vector_PRECISION x, int start, i
   PROF_PRECISION_STOP( _CPY, (double)(end-start)/(double)l->inner_vector_size );
 }
 
-#ifndef OPTIMIZED_LINALG_PRECISION
 void vector_PRECISION_saxpy( vector_PRECISION z, vector_PRECISION x, vector_PRECISION y, complex_PRECISION alpha, int start, int end, level_struct *l ) {
   
   int thread = omp_get_thread_num();
@@ -329,9 +314,7 @@ void vector_PRECISION_saxpy( vector_PRECISION z, vector_PRECISION x, vector_PREC
   if( thread == 0 && start != end )
   PROF_PRECISION_STOP( _LA8, (double)(end-start)/(double)l->inner_vector_size );
 }
-#endif
 
-#ifndef OPTIMIZED_LINALG_PRECISION
 void vector_PRECISION_multi_saxpy( vector_PRECISION z, vector_PRECISION *V, complex_PRECISION *alpha,
                                int sign, int count, int start, int end, level_struct *l ) {
   
@@ -353,7 +336,6 @@ void vector_PRECISION_multi_saxpy( vector_PRECISION z, vector_PRECISION *V, comp
   if( thread == 0 && start != end )
   PROF_PRECISION_STOP( _LA8, (PRECISION)(count) );
 }
-#endif
 
 void vector_PRECISION_projection( vector_PRECISION z, vector_PRECISION v, int k, vector_PRECISION *W, complex_PRECISION *diag, 
                                   int orthogonal, level_struct *l, Thread *threading ) {
@@ -536,7 +518,6 @@ void gram_schmidt_PRECISION( vector_PRECISION *V, complex_PRECISION *buffer, con
 }
 
 
-#if !defined( SSE ) || !defined( GRAM_SCHMIDT_VECTORIZED_PRECISION )
 void setup_gram_schmidt_PRECISION_compute_dots(
     complex_PRECISION *thread_buffer, vector_PRECISION *V, int count, int offset,
     int start, int end, level_struct *l, struct Thread *threading) {
@@ -577,10 +558,8 @@ void setup_gram_schmidt_PRECISION_compute_dots(
   END_MASTER(threading)
   // only master needs the result in this case (it will be distributed later)
 }
-#endif
 
 
-#if !defined( SSE ) || !defined( GRAM_SCHMIDT_VECTORIZED_PRECISION )
 void setup_gram_schmidt_PRECISION_axpys(
     complex_PRECISION *thread_buffer, vector_PRECISION *V, int count, int offset,
     int start, int end, level_struct *l, struct Thread *threading) {
@@ -602,7 +581,6 @@ void setup_gram_schmidt_PRECISION_axpys(
     }
   }
 }
-#endif
 
 
 void setup_gram_schmidt_PRECISION( vector_PRECISION *V, vector_PRECISION g5v,

@@ -22,8 +22,6 @@
 #ifndef COARSE_OPERATOR_PRECISION_HEADER
   #define COARSE_OPERATOR_PRECISION_HEADER
 
-  #include "blas_vectorized.h"
-
   struct Thread;
   
   void coarse_operator_PRECISION_alloc( level_struct *l );

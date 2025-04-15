@@ -200,17 +200,6 @@ void schwarz_PRECISION_alloc( schwarz_PRECISION_struct *s, level_struct *l ) {
     MALLOC( s->local_minres_buffer[2], complex_PRECISION, l->schwarz_vector_size );
   }
 
-#ifdef OPTIMIZED_NEIGHBOR_COUPLING_PRECISION
-  if ( l->depth == 0 ) {
-    MALLOC_HUGEPAGES( s->op.D_vectorized, PRECISION, 2*4*(2*l->vector_size-l->inner_vector_size), 4*SIMD_LENGTH_PRECISION );
-    MALLOC_HUGEPAGES( s->op.D_transformed_vectorized, PRECISION, 2*4*(2*l->vector_size-l->inner_vector_size), 4*SIMD_LENGTH_PRECISION );
-  }
-#endif
-#ifdef OPTIMIZED_SELF_COUPLING_PRECISION
-  if ( l->depth == 0 ) {
-    MALLOC_HUGEPAGES( s->op.clover_vectorized, PRECISION, 2*6*l->inner_vector_size, 4*SIMD_LENGTH_PRECISION );
-  }
-#endif
 }
 
 
@@ -295,17 +284,6 @@ void schwarz_PRECISION_free( schwarz_PRECISION_struct *s, level_struct *l ) {
     s->local_minres_buffer[1] = NULL;
     s->local_minres_buffer[2] = NULL;
   }
-#ifdef OPTIMIZED_NEIGHBOR_COUPLING_PRECISION
-  if ( l->depth == 0 ) {
-    FREE_HUGEPAGES( s->op.D_vectorized, PRECISION, 2*4*(2*l->vector_size-l->inner_vector_size) );
-    FREE_HUGEPAGES( s->op.D_transformed_vectorized, PRECISION, 2*4*(2*l->vector_size-l->inner_vector_size) );
-  }
-#endif
-#ifdef OPTIMIZED_SELF_COUPLING_PRECISION
-  if ( l->depth == 0 ) {
-    FREE_HUGEPAGES( s->op.clover_vectorized, PRECISION, 2*6*l->inner_vector_size );
-  }
-#endif
 }
 
 
@@ -739,7 +717,6 @@ void schwarz_PRECISION_boundary_update( schwarz_PRECISION_struct *s, level_struc
   }
 }
 
-#ifndef OPTIMIZED_NEIGHBOR_COUPLING_PRECISION
 void block_PRECISION_boundary_op( vector_PRECISION eta, vector_PRECISION phi, int k,
                                   schwarz_PRECISION_struct *s, level_struct *l ) {
   // k: number of current block
@@ -852,10 +829,8 @@ void block_PRECISION_boundary_op( vector_PRECISION eta, vector_PRECISION phi, in
     pbn_su3_X_PRECISION( buf2, eta_pt );
   }  
 }
-#endif
 
 
-#ifndef OPTIMIZED_NEIGHBOR_COUPLING_PRECISION
 void n_block_PRECISION_boundary_op( vector_PRECISION eta, vector_PRECISION phi, int k,
                                     schwarz_PRECISION_struct *s, level_struct *l ) {
   // k: number of current block
@@ -968,10 +943,8 @@ void n_block_PRECISION_boundary_op( vector_PRECISION eta, vector_PRECISION phi, 
     pbn_su3_X_PRECISION( buf2, eta_pt );
   }  
 }
-#endif
 
 
-#ifndef OPTIMIZED_NEIGHBOR_COUPLING_PRECISION
 void coarse_block_PRECISION_boundary_op( vector_PRECISION eta, vector_PRECISION phi,
                                          int k, schwarz_PRECISION_struct *s, level_struct *l ) {
   // k: number of current block
@@ -1000,9 +973,7 @@ void coarse_block_PRECISION_boundary_op( vector_PRECISION eta, vector_PRECISION 
     }
   }
 }
-#endif
 
-#ifndef OPTIMIZED_NEIGHBOR_COUPLING_PRECISION
 void n_coarse_block_PRECISION_boundary_op( vector_PRECISION eta, vector_PRECISION phi,
                                            int k, schwarz_PRECISION_struct *s, level_struct *l ) {
   // k: number of current block
@@ -1031,9 +1002,7 @@ void n_coarse_block_PRECISION_boundary_op( vector_PRECISION eta, vector_PRECISIO
     }
   }
 }
-#endif
 
-#if !defined(OPTIMIZED_NEIGHBOR_COUPLING_PRECISION) && !defined(OPTIMIZED_SELF_COUPLING_PRECISION)
 void schwarz_PRECISION_setup( schwarz_PRECISION_struct *s, operator_double_struct *op_in, level_struct *l ) {
 
 /*********************************************************************************  
@@ -1072,7 +1041,6 @@ void schwarz_PRECISION_setup( schwarz_PRECISION_struct *s, operator_double_struc
   
   schwarz_PRECISION_boundary_update( s, l );
 }
-#endif
 
 void additive_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRECISION eta, const int cycles, int res, 
                                  schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
