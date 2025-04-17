@@ -391,9 +391,9 @@ void g5D_apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION
 void apply_coarse_operator_dagger_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op,
                                              level_struct *l, struct Thread *threading ) {
   
-  coarse_gamma5_PRECISION( l->vbuf_PRECISION[3], phi, threading->start_index[l->depth], threading->end_index[l->depth], l );
+  coarse_gamma5_PRECISION( l->vbuf_PRECISION[3], phi, 0, l->num_inner_lattice_sites * l->num_lattice_site_var, l );
   apply_coarse_operator_PRECISION( eta, l->vbuf_PRECISION[3], op, l, threading );
-  coarse_gamma5_PRECISION( eta, eta, threading->start_index[l->depth], threading->end_index[l->depth], l );
+  coarse_gamma5_PRECISION( eta, eta, 0, l->num_inner_lattice_sites * l->num_lattice_site_var, l );
 }
 
 

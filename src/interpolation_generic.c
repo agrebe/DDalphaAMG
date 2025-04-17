@@ -74,8 +74,8 @@ void define_interpolation_PRECISION_operator( complex_PRECISION **interpolation,
   int j, num_eig_vect = l->num_eig_vect;
   complex_PRECISION *operator = l->is_PRECISION.operator;
 
-  int start = threading->start_index[l->depth];
-  int end = threading->end_index[l->depth];
+  int start = 0;
+  int end = l->num_inner_lattice_sites * l->num_lattice_site_var;
       
   SYNC_CORES(threading)
   operator += start*num_eig_vect;

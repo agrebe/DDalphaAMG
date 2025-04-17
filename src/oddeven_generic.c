@@ -439,8 +439,8 @@ void oddeven_to_serial_PRECISION( vector_double out, vector_PRECISION in, level_
   
   int i, j, k,
       nsv = l->num_lattice_site_var, *tt = l->oe_op_PRECISION.translation_table;
-  int start = threading->start_site[l->depth];
-  int end   = threading->end_site[l->depth];
+  int start = 0;
+  int end   = l->num_inner_lattice_sites;
 
   // this function seems to do some data reordering, barriers ensure that everything is in sync
   SYNC_CORES(threading)
@@ -465,8 +465,8 @@ void serial_to_oddeven_PRECISION( vector_PRECISION out, vector_double in, level_
   
   int i, j, k,
       nsv = l->num_lattice_site_var, *tt = l->oe_op_PRECISION.translation_table;
-  int start = threading->start_site[l->depth];
-  int end   = threading->end_site[l->depth];
+  int start = 0;
+  int end   = l->num_inner_lattice_sites;
 
   // this function seems to do some data reordering, barriers ensure that everything is in sync
   SYNC_CORES(threading)
@@ -487,8 +487,8 @@ void oddeven_to_block_PRECISION( vector_PRECISION out, vector_PRECISION in, leve
   int i, j, k, m,
       nsv = l->num_lattice_site_var, *tt_oe = l->oe_op_PRECISION.translation_table,
       *tt_b = l->s_PRECISION.op.translation_table;
-  int start = threading->start_site[l->depth];
-  int end   = threading->end_site[l->depth];
+  int start = 0;
+  int end   = l->num_inner_lattice_sites;
 
   // this function seems to do some data reordering, barriers ensure that everything is in sync
   SYNC_CORES(threading)
@@ -509,8 +509,8 @@ void block_to_oddeven_PRECISION( vector_PRECISION out, vector_PRECISION in, leve
   int i, j, k, m,
       nsv = l->num_lattice_site_var, *tt_oe = l->oe_op_PRECISION.translation_table,
       *tt_b = l->s_PRECISION.op.translation_table;
-  int start = threading->start_site[l->depth];
-  int end   = threading->end_site[l->depth];
+  int start = 0;
+  int end   = l->num_inner_lattice_sites;
 
   // this function seems to do some data reordering, barriers ensure that everything is in sync
   SYNC_CORES(threading)

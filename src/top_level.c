@@ -27,8 +27,8 @@ void rhs_define( vector_double rhs, level_struct *l, struct Thread *threading ) 
   if(threading->thread != 0)
     return;
 
-  int start = threading->start_index[l->depth];
-  int end = threading->end_index[l->depth];
+  int start = 0;
+  int end = l->num_inner_lattice_sites * l->num_lattice_site_var;
 
   if ( g.rhs == 0 ) {
     vector_double_define( rhs, 1, start, end, l );
@@ -63,7 +63,7 @@ void rhs_define( vector_double rhs, level_struct *l, struct Thread *threading ) 
 
 int wilson_driver( vector_double solution, vector_double source, level_struct *l, struct Thread *threading ) {
   
-  int iter = 0, start = threading->start_index[l->depth], end = threading->end_index[l->depth];
+  int iter = 0, start = 0, end = l->num_inner_lattice_sites * l->num_lattice_site_var;
   
   vector_double rhs = g.mixed_precision==2?g.p_MP.dp.b:g.p.b;
   vector_double sol = g.mixed_precision==2?g.p_MP.dp.x:g.p.x;
@@ -127,13 +127,8 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
   START_MASTER(threading)
   MALLOC( solution, complex_double, l->inner_vector_size );
   MALLOC( source, complex_double, l->inner_vector_size );
-  // use threading->workspace to distribute pointer to newly allocated memory to all threads
-  ((vector_double *)threading->workspace)[0] = solution;
-  ((vector_double *)threading->workspace)[1] = source;
   END_MASTER(threading)
   SYNC_MASTER_TO_ALL(threading)
-  solution = ((vector_double *)threading->workspace)[0];
-  source   = ((vector_double *)threading->workspace)[1];
   
   int Lx = g.local_lattice[0][X];
   int Ly = g.local_lattice[0][Y];

@@ -127,20 +127,9 @@
   free( variable ); variable = NULL; g.cur_storage -= (sizeof(kind) * (length))/(1024.0*1024.0); } else { \
   printf0("multiple free of \"%s\"? pointer is already NULL (%s:%d).\n", #variable, __FILE__, __LINE__ ); } }while(0)
   
-  #define PUBLIC_MALLOC( variable, kind, size ) do{ START_MASTER(threading) MALLOC( variable, kind, size ); \
-  ((kind**)threading->workspace)[0] = variable; END_MASTER(threading) SYNC_MASTER_TO_ALL(threading) \
-  variable = ((kind**)threading->workspace)[0]; SYNC_MASTER_TO_ALL(threading) }while(0)
+  #define PUBLIC_MALLOC( variable, kind, size ) MALLOC(variable, kind, size)
   
-  #define PUBLIC_FREE( variable, kind, size ) do{ SYNC_MASTER_TO_ALL(threading) \
-  START_MASTER(threading) FREE( variable, kind, size ); END_MASTER(threading) SYNC_MASTER_TO_ALL(threading) variable = NULL; }while(0)
-  
-  #define PUBLIC_MALLOC2( variable, kind, size, thrdng ) do{ START_MASTER(thrdng) MALLOC( variable, kind, size ); \
-  ((kind**)thrdng->workspace)[0] = variable; END_MASTER(thrdng) SYNC_MASTER_TO_ALL(thrdng) \
-  variable = ((kind**)thrdng->workspace)[0]; SYNC_MASTER_TO_ALL(thrdng) }while(0)
-  
-  #define PUBLIC_FREE2( variable, kind, size, thrdng ) do{ SYNC_MASTER_TO_ALL(thrdng) \
-  START_MASTER(thrdng) FREE( variable, kind, size ); END_MASTER(thrdng) SYNC_MASTER_TO_ALL(thrdng) variable = NULL; }while(0)
-  
+  #define PUBLIC_FREE( variable, kind, size ) FREE(variable, kind, size)
   
   #define ASSERT( expression ) do{ if ( !(expression) ) { \
   error0("assertion \"%s\" failed (%s:%d)\n       bad choice of input parameters (please read the user manual in /doc).\n", \

@@ -1776,8 +1776,8 @@ void trans_PRECISION( vector_PRECISION out, vector_double in, int *tt, level_str
   
   int i, index;
   vector_PRECISION out_pt = out; vector_double in_pt = in;
-  int start = threading->start_site[l->depth];
-  int end   = threading->end_site[l->depth];
+  int start = 0;
+  int end   = l->num_inner_lattice_sites;
 
   // this function seems to do some data reordering, barriers ensure that everything is in sync
   SYNC_CORES(threading)
@@ -1797,8 +1797,8 @@ void trans_back_PRECISION( vector_double out, vector_PRECISION in, int *tt, leve
   
   int i, index;
   vector_double out_pt = out; vector_PRECISION in_pt = in;
-  int start = threading->start_site[l->depth];
-  int end   = threading->end_site[l->depth];
+  int start = 0;
+  int end   = l->num_inner_lattice_sites;
 
   // this function seems to do some data reordering, barriers ensure that everything is in sync
   SYNC_CORES(threading)

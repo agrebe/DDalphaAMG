@@ -80,25 +80,16 @@ int main( int argc, char **argv ) {
     FREE( clov, complex_double, 3*l.inner_vector_size );
   }
 
-  commonthreaddata = (struct common_thread_data *)malloc(sizeof(struct common_thread_data));
-  init_common_thread_data(commonthreaddata);
+  setup_no_threading(no_threading, &l);
   
-#pragma omp parallel num_threads(g.num_openmp_processes)
-  {
-    struct Thread threading;
-    setup_threading(&threading, commonthreaddata, &l);
-    setup_no_threading(no_threading, &l);
-    
-    // setup up initial MG hierarchy
-    method_setup( NULL, &l, &threading );
-    
-    // iterative phase
-    method_update( l.setup_iter, &l, &threading );
-    
-    solve_driver( &l, &threading );
-  }
+  // setup up initial MG hierarchy
+  method_setup( NULL, &l, no_threading );
   
-  finalize_common_thread_data(commonthreaddata);
+  // iterative phase
+  method_update( l.setup_iter, &l, no_threading );
+  
+  solve_driver( &l, no_threading );
+  
   finalize_no_threading(no_threading);
   method_free( &l );
   method_finalize( &l );

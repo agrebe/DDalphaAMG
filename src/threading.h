@@ -68,24 +68,13 @@
 // only one thread (master) will execute the code section between
 // START_LOCKED_MASTER and END_LOCKED_MASTER, and it is protected by barriers
 // among cores to prevent data races
-#define START_LOCKED_MASTER(threading) \
-    if(threading->thread == 0) \
-        CORE_BARRIER(threading); \
-    if(threading->core + threading->thread == 0) {
-#define END_LOCKED_MASTER(threading) \
-    } \
-    if(threading->thread == 0) \
-        CORE_BARRIER(threading);
+#define START_LOCKED_MASTER(threading) 
+#define END_LOCKED_MASTER(threading)
 
-#define START_MASTER(threading) \
-    if(threading->core + threading->thread == 0) {
-#define END_MASTER(threading) \
-    }
+#define START_MASTER(threading)
+#define END_MASTER(threading)
 
-#define SYNC_MASTER_TO_ALL(threading) \
-    if(threading->thread == 0) \
-        CORE_BARRIER(threading); \
-    HYPERTHREAD_BARRIER(threading);
+#define SYNC_MASTER_TO_ALL(threading)
     
 #define SYNC_CORES(threading) \
     if(threading->thread == 0) \
@@ -118,9 +107,6 @@ struct common_thread_data
     void (*barrier)(int);
     // barrier among hyperthreads on a core
     void (*thread_barrier)(void *, int);
-    // *common* workspace for *all* threads
-    // sometimes threads need to exchange data, they can use this
-    char *workspace;
 };
 
 void init_common_thread_data(struct common_thread_data *common);
@@ -152,9 +138,6 @@ typedef struct Thread
     void (*thread_barrier)(void *, int);
     void *thread_barrier_data;
 
-    // *common* workspace for *all* threads
-    // sometimes threads need to exchange data, they can use this
-    char *workspace;
 } Thread;
 
 void setup_threading(struct Thread *threading, struct common_thread_data *common, struct level_struct *l);

@@ -188,8 +188,8 @@ void interpolation_PRECISION_define( vector_double *V, level_struct *l, struct T
   int k, i, n = l->num_eig_vect,
       pc = 0, pi = 1, pn = n*6;
   vector_PRECISION *buffer = NULL;
-  int start = threading->start_index[l->depth];
-  int end   = threading->end_index[l->depth];
+  int start = 0;
+  int end   = l->num_inner_lattice_sites * l->num_lattice_site_var;
     
   if ( V == NULL ) {
     
@@ -269,7 +269,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     if ( !l->idle ) {
       for ( int i=0; i<l->num_eig_vect; i++ ) {
         vector_PRECISION_copy( l->is_PRECISION.interpolation[i], l->is_PRECISION.test_vector[i],
-            threading->start_index[l->depth], threading->end_index[l->depth], l );
+            0, l->num_inner_lattice_sites * l->num_lattice_site_var, l );
       }
       gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, l->num_eig_vect, l, threading );
       if ( l->depth > 0 )
@@ -337,7 +337,7 @@ void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l, s
         smoother_PRECISION( buf1, NULL, l->is_PRECISION.test_vector[i], l->post_smooth_iter, _RES, _NO_SHIFT, l, threading );
         vector_PRECISION_real_scale( l->is_PRECISION.test_vector[i], buf1,
                                      1.0/global_norm_PRECISION( buf1, 0, l->inner_vector_size, l, threading ),
-                                     threading->start_index[l->depth], threading->end_index[l->depth], l );
+                                     0, l->num_inner_lattice_sites * l->num_lattice_site_var, l );
         pc += l->post_smooth_iter;
         START_MASTER(threading)
         if ( pc >= 0.2*pi*pn ) { printf0("%4d%% |", 20*pi); fflush(0); pi++; }
@@ -349,7 +349,7 @@ void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l, s
       
       for ( int i=0; i<l->num_eig_vect; i++ )
         vector_PRECISION_copy( l->is_PRECISION.interpolation[i], l->is_PRECISION.test_vector[i],
-            threading->start_index[l->depth], threading->end_index[l->depth], l );
+            0, l->num_inner_lattice_sites * l->num_lattice_site_var, l );
       gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, l->num_eig_vect, l, threading );
       if ( l->depth > 0 )
         gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, l->num_eig_vect, l, threading );
@@ -404,7 +404,7 @@ void test_vector_PRECISION_update( int i, level_struct *l, struct Thread *thread
   if ( !l->idle )
     vector_PRECISION_real_scale( l->is_PRECISION.test_vector[i], l->p_PRECISION.x,
                                  1.0/global_norm_PRECISION( l->p_PRECISION.x, 0, l->inner_vector_size, l, threading ),
-                                 threading->start_index[l->depth], threading->end_index[l->depth], l );
+                                 0, l->num_inner_lattice_sites * l->num_lattice_site_var, l );
 }
 
 

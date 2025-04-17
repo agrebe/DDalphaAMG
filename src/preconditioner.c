@@ -25,7 +25,7 @@
 void preconditioner( vector_double phi, vector_double Dphi, vector_double eta,
                       const int res, level_struct *l, struct Thread *threading ) {
   if ( g.method == 0 )
-    vector_double_copy( phi, eta, threading->start_index[l->depth], threading->end_index[l->depth], l );
+    vector_double_copy( phi, eta, 0, l->num_inner_lattice_sites * l->num_lattice_site_var, l );
   else if ( g.method < 5 || g.method == 6 || !g.odd_even ) {
     if ( g.mixed_precision ) {
       trans_float( l->sbuf_float[0], eta, l->s_float.op.translation_table, l, threading );

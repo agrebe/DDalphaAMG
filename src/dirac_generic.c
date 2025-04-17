@@ -283,9 +283,9 @@ void d_plus_clover_dagger_PRECISION( vector_PRECISION eta, vector_PRECISION phi,
 
 void gamma5_PRECISION( vector_PRECISION eta, vector_PRECISION phi, level_struct *l, struct Thread *threading ) {
   
-  vector_PRECISION eta_end = eta + threading->end_index[l->depth];
-  eta += threading->start_index[l->depth];
-  phi += threading->start_index[l->depth];
+  vector_PRECISION eta_end = eta + l->num_inner_lattice_sites * l->num_lattice_site_var;
+  eta += 0;
+  phi += 0;
   while ( eta < eta_end ) {
     FOR6( *eta = -(*phi); phi++; eta++; )
     FOR6( *eta =  (*phi); phi++; eta++; )
@@ -507,7 +507,7 @@ void shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION sh
     complex_PRECISION shift_diff = shift - old_shift;
     
     if ( l->depth == 0 ) {
-      int start = threading->start_site[l->depth];
+      int start = 0;
       int n     = threading->n_site[l->depth];
       clover += start*(g.csw?42:12);
       for ( i=0; i<n; i++ ) {
@@ -518,7 +518,7 @@ void shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION sh
         clover += (g.csw?42:12);
       }
     } else {
-      int start = threading->start_site[l->depth];
+      int start = 0;
       int n     = threading->n_site[l->depth];
       int k = l->num_lattice_site_var/2;
       int sc_size = (l->num_lattice_site_var/2)*(l->num_lattice_site_var+1);
@@ -557,7 +557,7 @@ void g5D_shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISIO
     complex_PRECISION shift_diff = shift - old_shift;
     
     if ( l->depth == 0 ) {
-      int start = threading->start_site[l->depth];
+      int start = 0;
       int n     = threading->n_site[l->depth];
       clover += start*(g.csw?42:12);
       for ( i=0; i<n; i++ ) {
@@ -571,7 +571,7 @@ void g5D_shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISIO
         clover += (g.csw?42:12);
       }
     } else {
-      int start = threading->start_site[l->depth];
+      int start = 0;
       int n     = threading->n_site[l->depth];
       int k = l->num_lattice_site_var/2;
       int sc_size = (l->num_lattice_site_var/2)*(l->num_lattice_site_var+1);

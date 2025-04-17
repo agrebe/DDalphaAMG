@@ -38,8 +38,8 @@ void smoother_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRE
   } else if ( g.method == 3 ) {
     sixteen_color_schwarz_PRECISION( phi, Dphi, eta, n, res, &(l->s_PRECISION), l, threading );
   } else {
-    int start = threading->start_index[l->depth];
-    int end   = threading->end_index[l->depth];
+    int start = 0;
+    int end   = l->num_inner_lattice_sites * l->num_lattice_site_var;
     START_LOCKED_MASTER(threading)
     l->sp_PRECISION.shift = shift;
     l->sp_PRECISION.initial_guess_zero = res;
@@ -96,8 +96,8 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
       if ( i==0 && res == _NO_RES ) {
         restrict_PRECISION( l->next_level->p_PRECISION.b, eta, l, threading );
       } else {
-        int start = threading->start_index[l->depth];
-        int end   = threading->end_index[l->depth];
+        int start = 0;
+        int end   = l->num_inner_lattice_sites * l->num_lattice_site_var;
         apply_operator_PRECISION( l->vbuf_PRECISION[2], phi, &(l->p_PRECISION), l, threading );
         vector_PRECISION_minus( l->vbuf_PRECISION[3], eta, l->vbuf_PRECISION[2], start, end, l );
         restrict_PRECISION( l->next_level->p_PRECISION.b, l->vbuf_PRECISION[3], l, threading );

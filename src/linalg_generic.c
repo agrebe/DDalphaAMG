@@ -23,45 +23,18 @@
 
 complex_PRECISION global_inner_product_PRECISION( vector_PRECISION phi, vector_PRECISION psi, int start, int end, level_struct *l, struct Thread *threading ) {
   
-  PROF_PRECISION_START( _GIP, threading );
   complex_PRECISION local_alpha = 0, global_alpha = 0;
+  local_alpha = process_inner_product_PRECISION( phi, psi, start, end, l, threading );
+  PROF_PRECISION_START( _GIP, threading );
 
-  int thread_start;
-  int thread_end;
-  compute_core_start_end(start, end, &thread_start, &thread_end, l, threading);
-  
-  SYNC_CORES(threading)
-  
-  VECTOR_FOR( int i=thread_start, i<thread_end, local_alpha += conj_PRECISION(phi[i])*psi[i], i++, l );
-
-  // sum over cores
-  START_NO_HYPERTHREADS(threading)
-  ((complex_PRECISION *)threading->workspace)[threading->core] = local_alpha;
-  END_NO_HYPERTHREADS(threading)
-  // master sums up all results
-  SYNC_CORES(threading)
-  START_MASTER(threading)
-  for(int i=1; i<threading->n_core; i++)
-    ((complex_PRECISION *)threading->workspace)[0] += ((complex_PRECISION *)threading->workspace)[i];
-  local_alpha = ((complex_PRECISION *)threading->workspace)[0];
-  END_MASTER(threading)
-  
   if ( g.num_processes > 1 ) {
-    START_MASTER(threading)
     PROF_PRECISION_START( _ALLR );
     MPI_Allreduce( &local_alpha, &global_alpha, 1, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
     PROF_PRECISION_STOP( _ALLR, 1 );
-    ((complex_PRECISION *)threading->workspace)[0] = global_alpha;
-    END_MASTER(threading)
-    // all threads need the result of the norm
-    SYNC_MASTER_TO_ALL(threading)
-    global_alpha = ((complex_PRECISION *)threading->workspace)[0];
     PROF_PRECISION_STOP( _GIP, (double)(end-start)/(double)l->inner_vector_size, threading );
     return global_alpha;
   } else {
     // all threads need the result of the norm
-    SYNC_MASTER_TO_ALL(threading)
-    local_alpha = ((complex_PRECISION *)threading->workspace)[0];
     PROF_PRECISION_STOP( _GIP, (double)(end-start)/(double)l->inner_vector_size, threading );
     return local_alpha;
   }
@@ -77,19 +50,6 @@ complex_PRECISION process_inner_product_PRECISION( vector_PRECISION phi, vector_
   SYNC_CORES(threading)
   
   THREADED_VECTOR_FOR( i, start, end, local_alpha += conj_PRECISION(phi[i])*psi[i], i++, l, threading );
-
-  START_NO_HYPERTHREADS(threading)
-  ((complex_PRECISION *)threading->workspace)[threading->core] = local_alpha;
-  END_NO_HYPERTHREADS(threading)
-  // master sums up all results
-  SYNC_CORES(threading)
-  START_MASTER(threading)
-  for(int i=1; i<threading->n_core; i++)
-    ((complex_PRECISION *)threading->workspace)[0] += ((complex_PRECISION *)threading->workspace)[i];
-  END_MASTER(threading)
-  // all threads need the result of the norm
-  SYNC_MASTER_TO_ALL(threading)
-  local_alpha = ((complex_PRECISION *)threading->workspace)[0];
 
   PROF_PRECISION_STOP( _PIP, (double)(end-start)/(double)l->inner_vector_size, threading );
 
@@ -128,21 +88,6 @@ void process_multi_inner_product_PRECISION( int count, complex_PRECISION *result
 #endif
   }
 
-  START_NO_HYPERTHREADS(threading)
-  ((complex_PRECISION **)threading->workspace)[threading->core] = results;
-  END_NO_HYPERTHREADS(threading)
-  // master sums up all results
-  SYNC_CORES(threading)
-  START_MASTER(threading)
-  for(int c=0; c<count; c++)
-    for(int i=1; i<threading->n_core; i++)
-      ((complex_PRECISION **)threading->workspace)[0][c] += ((complex_PRECISION **)threading->workspace)[i][c];
-  END_MASTER(threading)
-  // all threads need the result of the norm
-  SYNC_MASTER_TO_ALL(threading)
-  for(int c=0; c<count; c++)
-    results[c] = ((complex_PRECISION **)threading->workspace)[0][c];
-
   PROF_PRECISION_STOP( _PIP, (double)(end-start)/(double)l->inner_vector_size, threading );
 }
 
@@ -161,78 +106,11 @@ complex_PRECISION local_xy_over_xx_PRECISION( vector_PRECISION phi, vector_PRECI
 }
 
 PRECISION global_norm_PRECISION( vector_PRECISION x, int start, int end, level_struct *l, struct Thread *threading ) {
-  
-  PROF_PRECISION_START( _GIP, threading );
-  
-  PRECISION local_alpha = 0, global_alpha = 0;
-
-  int thread_start;
-  int thread_end;
-  compute_core_start_end(start, end, &thread_start, &thread_end, l, threading);
-  
-  SYNC_CORES(threading)
-  
-  VECTOR_FOR( int i=thread_start, i<thread_end, local_alpha += NORM_SQUARE_PRECISION(x[i]), i++, l );
-
-  // sum over cores
-  START_NO_HYPERTHREADS(threading)
-  ((PRECISION *)threading->workspace)[threading->core] = local_alpha;
-  END_NO_HYPERTHREADS(threading)
-  // master sums up all results
-  SYNC_CORES(threading)
-  START_MASTER(threading)
-  for(int i=1; i<threading->n_core; i++)
-    ((PRECISION *)threading->workspace)[0] += ((PRECISION *)threading->workspace)[i];
-  local_alpha = ((PRECISION *)threading->workspace)[0];
-  END_MASTER(threading)
-
-  if ( g.num_processes > 1 ) {
-    START_MASTER(threading)
-    PROF_PRECISION_START( _ALLR );
-    MPI_Allreduce( &local_alpha, &global_alpha, 1, MPI_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
-    PROF_PRECISION_STOP( _ALLR, 1 );
-    ((PRECISION *)threading->workspace)[0] = global_alpha;
-    END_MASTER(threading)
-    // all threads need the result of the norm
-    SYNC_MASTER_TO_ALL(threading)
-    global_alpha = ((PRECISION *)threading->workspace)[0];
-    PROF_PRECISION_STOP( _GIP, (double)(end-start)/(double)l->inner_vector_size, threading );
-    return (PRECISION)sqrt((double)global_alpha);
-  } else {
-    // all threads need the result of the norm
-    SYNC_MASTER_TO_ALL(threading)
-    local_alpha = ((PRECISION *)threading->workspace)[0];
-    PROF_PRECISION_STOP( _GIP, (double)(end-start)/(double)l->inner_vector_size, threading );
-    return (PRECISION)sqrt((double)local_alpha);
-  }
+  return (PRECISION) sqrt((double) global_inner_product_PRECISION( x, x, start, end, l, threading ));
 }
 
 PRECISION process_norm_PRECISION( vector_PRECISION x, int start, int end, level_struct *l, struct Thread *threading ) {
-     
-  int i;
-  PRECISION local_alpha = 0;
-  PROF_PRECISION_START( _PIP, threading );
-  
-  SYNC_CORES(threading)
-  
-  THREADED_VECTOR_FOR( i, start, end, local_alpha += NORM_SQUARE_PRECISION(x[i]), i++, l, threading );
-
-  START_NO_HYPERTHREADS(threading)
-  ((PRECISION *)threading->workspace)[threading->core] = local_alpha;
-  END_NO_HYPERTHREADS(threading)
-  // master sums up all results
-  SYNC_CORES(threading)
-  START_MASTER(threading)
-  for(int i=1; i<threading->n_core; i++)
-    ((PRECISION *)threading->workspace)[0] += ((PRECISION *)threading->workspace)[i];
-  END_MASTER(threading)
-  // all threads need the result of the norm
-  SYNC_MASTER_TO_ALL(threading)
-  local_alpha = ((PRECISION *)threading->workspace)[0];
-
-  PROF_PRECISION_STOP( _PIP, (double)(end-start)/(double)l->inner_vector_size, threading );
-
-  return (PRECISION)sqrt((double)local_alpha);
+  return (PRECISION) sqrt((double) process_inner_product_PRECISION( x, x, start, end, l, threading ));
 }
 
 
@@ -543,20 +421,6 @@ void setup_gram_schmidt_PRECISION_compute_dots(
     }
   }
 
-  START_NO_HYPERTHREADS(threading)
-  ((complex_PRECISION **)threading->workspace)[threading->core] = thread_buffer;
-  END_NO_HYPERTHREADS(threading)
-  // master sums up all results
-  SYNC_CORES(threading)
-  START_MASTER(threading)
-  for(int i=1; i<threading->n_core; i++) {
-    for(int j=0; j<count; j++) {
-      ((complex_PRECISION **)threading->workspace)[0][j]        += ((complex_PRECISION **)threading->workspace)[i][j];
-      ((complex_PRECISION **)threading->workspace)[0][j+offset] += ((complex_PRECISION **)threading->workspace)[i][j+offset];
-    }
-  }
-  END_MASTER(threading)
-  // only master needs the result in this case (it will be distributed later)
 }
 
 
@@ -592,8 +456,8 @@ void setup_gram_schmidt_PRECISION( vector_PRECISION *V, vector_PRECISION g5v,
   int i, j;
   int start = 0;
   int end = l->inner_vector_size;
-  int thread_start = threading->start_index[l->depth];
-  int thread_end   = threading->end_index[l->depth];
+  int thread_start = 0;
+  int thread_end   = l->num_inner_lattice_sites * l->num_lattice_site_var;
 
   complex_PRECISION thread_buffer[4*n];
   
@@ -619,11 +483,7 @@ void setup_gram_schmidt_PRECISION( vector_PRECISION *V, vector_PRECISION g5v,
       MPI_Allreduce( thread_buffer, thread_buffer+2*n, 2*n, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
       PROF_PRECISION_STOP( _ALLR, 1 );
     }
-    for ( j=2*n; j<4*n; j++ )
-      ((complex_PRECISION *)(threading->workspace))[j] = thread_buffer[j];
     END_LOCKED_MASTER(threading)
-    for ( j=2*n; j<4*n; j++ )
-      thread_buffer[j] = ((complex_PRECISION *)(threading->workspace))[j];
 
     
     if ( l->depth > 0 ) {
