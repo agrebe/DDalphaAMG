@@ -53,18 +53,6 @@
 #endif
 
 
-#define START_UNTHREADED_FUNCTION(threading) \
-    if(threading->thread != 0) \
-        return; \
-    CORE_BARRIER(threading); \
-    if(threading->core != 0) \
-    { \
-        CORE_BARRIER(threading); \
-        return; \
-    }
-#define END_UNTHREADED_FUNCTION(threading) \
-    CORE_BARRIER(threading);
-
 // only one thread (master) will execute the code section between
 // START_LOCKED_MASTER and END_LOCKED_MASTER, and it is protected by barriers
 // among cores to prevent data races
@@ -76,11 +64,8 @@
 
 #define SYNC_MASTER_TO_ALL(threading)
     
-#define SYNC_CORES(threading) \
-    if(threading->thread == 0) \
-        CORE_BARRIER(threading);
-#define SYNC_HYPERTHREADS(threading) \
-    HYPERTHREAD_BARRIER(threading);
+#define SYNC_CORES(threading) 
+#define SYNC_HYPERTHREADS(threading) 
 
 #define START_NO_HYPERTHREADS(threading) \
     if(threading->thread == 0) {
@@ -146,13 +131,6 @@ void setup_threading_external(struct Thread *threading, struct common_thread_dat
         int n_core, int n_thread, int core, int thread);
 void update_threading(struct Thread *threading, struct level_struct *l);
 void setup_no_threading(struct Thread *no_threading, struct level_struct *l);
-
-// computes start and end indices for a core inside an array
-// puts zero for other hyperthreads
-void compute_core_start_end(int start, int end, int *core_start, int *core_end,
-        struct level_struct *l, struct Thread *threading);
-void compute_core_start_end_custom(int start, int end, int *core_start, int *core_end,
-        struct level_struct *l, struct Thread *threading, int granularity);
 
 void finalize_common_thread_data( struct common_thread_data *common );
 

@@ -475,7 +475,6 @@ void inv_iter_inv_fcycle_PRECISION( int setup_iter, level_struct *l, struct Thre
 
 void testvector_analysis_PRECISION( vector_PRECISION *test_vectors, level_struct *l, struct Thread *threading ) {
 #ifdef TESTVECTOR_ANALYSIS
-  START_UNTHREADED_FUNCTION(threading)
   if ( l->depth == 0 ) {
     
   complex_PRECISION lambda;
@@ -494,6 +493,5 @@ void testvector_analysis_PRECISION( vector_PRECISION *test_vectors, level_struct
   printf0("--------------------------------------- depth: %d ----------------------------------------\n", l->depth );
   
   }
-  END_UNTHREADED_FUNCTION(threading)
 #endif
 }

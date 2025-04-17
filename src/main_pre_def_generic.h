@@ -101,18 +101,13 @@
   
   #ifdef PROFILING
     #define PROF_PRECISION_START_UNTHREADED( TYPE ) do{ l->prof_PRECISION.time[TYPE] -= MPI_Wtime(); }while(0)
-    #define PROF_PRECISION_START_THREADED( TYPE, threading ) do{ if(threading->core + threading->thread == 0) l->prof_PRECISION.time[TYPE] -= MPI_Wtime(); }while(0)
+    #define PROF_PRECISION_START_THREADED( TYPE, threading ) PROF_PRECISION_START_UNTHREADED( TYPE )
+    #define PROF_PRECISION_STOP_UNTHREADED( TYPE, COUNT ) do{ l->prof_PRECISION.time[TYPE] += MPI_Wtime(); \
+    l->prof_PRECISION.count[TYPE] += COUNT; }while(0)
+    #define PROF_PRECISION_STOP_THREADED( TYPE, COUNT, threading ) PROF_PRECISION_STOP_UNTHREADED( TYPE, COUNT )
   #else
     #define PROF_PRECISION_START_UNTHREADED( TYPE )
     #define PROF_PRECISION_START_THREADED( TYPE, threading )
-  #endif
-  
-  #ifdef PROFILING
-    #define PROF_PRECISION_STOP_UNTHREADED( TYPE, COUNT ) do{ l->prof_PRECISION.time[TYPE] += MPI_Wtime(); \
-    l->prof_PRECISION.count[TYPE] += COUNT; }while(0)
-    #define PROF_PRECISION_STOP_THREADED( TYPE, COUNT, threading ) do{ if(threading->core + threading->thread == 0) { l->prof_PRECISION.time[TYPE] += MPI_Wtime(); \
-    l->prof_PRECISION.count[TYPE] += COUNT; } }while(0)
-  #else
     #define PROF_PRECISION_STOP_UNTHREADED( TYPE, COUNT )
     #define PROF_PRECISION_STOP_THREADED( TYPE, COUNT, threading )
   #endif

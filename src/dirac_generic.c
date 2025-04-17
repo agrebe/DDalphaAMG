@@ -81,8 +81,6 @@ static void spin2and3_clover_PRECISION( vector_PRECISION eta, vector_PRECISION p
 
 void block_d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, int start, schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
 
-  START_UNTHREADED_FUNCTION(threading)
-  
   int i, n = s->num_block_sites, *length = s->dir_length, **index = s->index, *neighbor = s->op.neighbor_table;
   vector_PRECISION lphi = phi+start, leta = eta+start;
   config_PRECISION clover = (g.csw==0.0)?s->op.clover+start:s->op.clover+(start/12)*42;
@@ -149,19 +147,16 @@ void block_d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, 
     pbn_su3_X_PRECISION( buf3, leta+12*j ); // eta(x+hat{X}) -= U_X(x)^dagger(x) (1+gamma_X) phi(x) + lift back
     pbp_su3_X_PRECISION( buf4, leta+12*k ); // eta(x) -= U_X(x) (1-gamma_X) phi(x+hat{X}) + lift back
   }
-  END_UNTHREADED_FUNCTION(threading)
 }
 
 
 void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
   
-  int n = l->num_inner_lattice_sites, *neighbor = op->neighbor_table, start, end;
+  int n = l->num_inner_lattice_sites, *neighbor = op->neighbor_table, start = 0, end = 12*n;
   int i, j, *nb_pt;
   complex_PRECISION pbuf[6];
   vector_PRECISION phi_pt, eta_pt, end_pt;
   config_PRECISION D_pt;
-  
-  compute_core_start_end(0, 12*n, &start, &end, l, threading );
   
   SYNC_MASTER_TO_ALL(threading)
 
@@ -495,10 +490,6 @@ void operator_updates_PRECISION( level_struct *l ) {
 
 void shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION shift, level_struct *l, struct Thread *threading ) {
   
-  // no hyperthreading in this function
-  if(threading->thread != 0)
-    return;
-
   config_PRECISION clover = op->clover;
   
   if ( clover != NULL ) {
@@ -508,7 +499,7 @@ void shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION sh
     
     if ( l->depth == 0 ) {
       int start = 0;
-      int n     = threading->n_site[l->depth];
+      int n     = l->num_lattice_site_var;
       clover += start*(g.csw?42:12);
       for ( i=0; i<n; i++ ) {
         for ( j=0; j<12; j++ ) {
@@ -519,7 +510,7 @@ void shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION sh
       }
     } else {
       int start = 0;
-      int n     = threading->n_site[l->depth];
+      int n     = l->num_lattice_site_var;
       int k = l->num_lattice_site_var/2;
       int sc_size = (l->num_lattice_site_var/2)*(l->num_lattice_site_var+1);
       clover += start*sc_size;
@@ -544,10 +535,6 @@ void shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION sh
 
 
 void g5D_shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION shift, level_struct *l, struct Thread *threading ) {
-  
-  // no hyperthreading in this function
-  if(threading->thread != 0)
-    return;
 
   config_PRECISION clover = op->clover;
   
@@ -558,7 +545,7 @@ void g5D_shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISIO
     
     if ( l->depth == 0 ) {
       int start = 0;
-      int n     = threading->n_site[l->depth];
+      int n     = l->num_lattice_site_var;
       clover += start*(g.csw?42:12);
       for ( i=0; i<n; i++ ) {
         for ( j=0; j<6; j++ ) {
@@ -572,7 +559,7 @@ void g5D_shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISIO
       }
     } else {
       int start = 0;
-      int n     = threading->n_site[l->depth];
+      int n     = l->num_lattice_site_var;
       int k = l->num_lattice_site_var/2;
       int sc_size = (l->num_lattice_site_var/2)*(l->num_lattice_site_var+1);
       clover += start*sc_size;

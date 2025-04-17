@@ -80,17 +80,14 @@ int main( int argc, char **argv ) {
     FREE( clov, complex_double, 3*l.inner_vector_size );
   }
 
-  setup_no_threading(no_threading, &l);
-  
   // setup up initial MG hierarchy
-  method_setup( NULL, &l, no_threading );
+  method_setup( NULL, &l, NULL );
   
   // iterative phase
-  method_update( l.setup_iter, &l, no_threading );
+  method_update( l.setup_iter, &l, NULL );
   
-  solve_driver( &l, no_threading );
+  solve_driver( &l, NULL );
   
-  finalize_no_threading(no_threading);
   method_free( &l );
   method_finalize( &l );
   

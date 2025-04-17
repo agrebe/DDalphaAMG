@@ -122,10 +122,8 @@ void coarse_diag_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_PRE
 
 void coarse_diag_ee_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
   
-  int n1 = op->num_even_sites;
-  int start;
-  int end;
-  compute_core_start_end_custom(0, n1, &start, &end, l, threading, 1);
+  int start = 0;
+  int end = op->num_even_sites;
   // even sites
   int offset = l->num_lattice_site_var;
   coarse_self_couplings_PRECISION( y+start*offset, x+start*offset, op->clover+start*(offset*offset+offset)/2, (end-start)*offset, l );
@@ -137,9 +135,8 @@ void coarse_diag_oo_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_
   int n1 = op->num_even_sites, n2 = op->num_odd_sites,
       offset = l->num_lattice_site_var, ess = (l->num_lattice_site_var/2)*(l->num_lattice_site_var+1);
   config_PRECISION sc = op->clover;
-  int start;
-  int end;
-  compute_core_start_end_custom(n1, n1+n2, &start, &end, l, threading, 1);
+  int start = n1;
+  int end = n1 + n2;
   
   x += start*offset;
   y += start*offset;
@@ -158,10 +155,8 @@ void coarse_diag_oo_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_
 
 void coarse_diag_oo_inv_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
   
-  int n1 = op->num_even_sites, n2 = op->num_odd_sites, start, end;
+  int n1 = op->num_even_sites, n2 = op->num_odd_sites, start = n1, end = n1 + n2;
 
-  compute_core_start_end_custom(n1, n1+n2, &start, &end, l, threading, 1);
-  
   // odd sites
   int offset = l->num_lattice_site_var, ess = (l->num_lattice_site_var/2)*(l->num_lattice_site_var+1),
       oss = l->num_lattice_site_var*l->num_lattice_site_var;
@@ -372,8 +367,6 @@ void coarse_oddeven_free_PRECISION( level_struct *l ) {
 void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op,
                                     const int amount, level_struct *l, struct Thread *threading ) {
 
-  START_NO_HYPERTHREADS(threading)
-
   int mu, i, index, num_site_var=l->num_lattice_site_var,
       num_4link_var=4*l->num_lattice_site_var*l->num_lattice_site_var,
       num_link_var=l->num_lattice_site_var*l->num_lattice_site_var,
@@ -382,9 +375,6 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
   vector_PRECISION in_pt, out_pt;
   config_PRECISION D_pt;
 
-  int core_start;
-  int core_end;
-  
   // assumptions (1) self coupling has already been performed
   //          OR (2) "out" is initialized with zeros
   set_boundary_PRECISION( out, 0, l, threading );
@@ -412,7 +402,9 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
   } else if ( amount == _ODD_SITES ) {
     start = 0; num_lattice_sites = op->num_even_sites;
   }
-  compute_core_start_end_custom(start, start+num_lattice_sites, &core_start, &core_end, l, threading, 1);
+
+  int core_start = start;
+  int core_end = start+num_lattice_sites;
   
   // compute U_mu^dagger coupling
   for ( i=core_start; i<core_end; i++ ) {
@@ -469,7 +461,8 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
   } else if ( amount == _ODD_SITES ) {
     start = op->num_even_sites, num_lattice_sites = op->num_odd_sites;
   }
-  compute_core_start_end_custom(start, start+num_lattice_sites, &core_start, &core_end, l, threading, 1);
+  core_start = start;
+  core_end = start+num_lattice_sites;
   
   // compute U_mu couplings
   for ( i=core_start; i<core_end; i++ ) {
@@ -501,16 +494,12 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     }
   }
   END_LOCKED_MASTER(threading)
-
-  END_NO_HYPERTHREADS(threading)
 }
 
 
 void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op,
                                       const int amount, level_struct *l, struct Thread *threading ) {
 
-  START_NO_HYPERTHREADS(threading)
-
   int mu, i, index, num_site_var=l->num_lattice_site_var,
       num_4link_var=4*l->num_lattice_site_var*l->num_lattice_site_var,
       num_link_var=l->num_lattice_site_var*l->num_lattice_site_var,
@@ -519,9 +508,6 @@ void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in,
   vector_PRECISION in_pt, out_pt;
   config_PRECISION D_pt;
 
-  int core_start;
-  int core_end;
-  
   // assumptions (1) self coupling has already been performed
   //          OR (2) "out" is initialized with zeros
   set_boundary_PRECISION( out, 0, l, threading );
@@ -549,7 +535,9 @@ void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in,
   } else if ( amount == _ODD_SITES ) {
     start = 0; num_lattice_sites = op->num_even_sites;
   }
-  compute_core_start_end_custom(start, start+num_lattice_sites, &core_start, &core_end, l, threading, 1);
+
+  int core_start = start;
+  int core_end = start + num_lattice_sites;
   
   // compute U_mu^dagger coupling
   for ( i=core_start; i<core_end; i++ ) {
@@ -606,7 +594,9 @@ void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in,
   } else if ( amount == _ODD_SITES ) {
     start = op->num_even_sites, num_lattice_sites = op->num_odd_sites;
   }
-  compute_core_start_end_custom(start, start+num_lattice_sites, &core_start, &core_end, l, threading, 1);
+
+  core_start = start;
+  core_end = start + num_lattice_sites;
   
   // compute U_mu couplings
   for ( i=core_start; i<core_end; i++ ) {
@@ -638,8 +628,6 @@ void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in,
     }
   }
   END_LOCKED_MASTER(threading)
-
-  END_NO_HYPERTHREADS(threading)
 }
 
 
@@ -669,11 +657,8 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
 void coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
     
   // start and end indices for vector functions depending on thread
-  int start;
-  int end;
-  // compute start and end indices for core
-  // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
-  compute_core_start_end(op->num_even_sites*l->num_lattice_site_var, l->inner_vector_size, &start, &end, l, threading);
+  int start = op->num_even_sites*l->num_lattice_site_var;
+  int end = l->inner_vector_size;
 
   vector_PRECISION *tmp = op->buffer;
   
@@ -699,8 +684,9 @@ void coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECI
 void g5D_coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
   
   int start_even, end_even, start_odd, end_odd;
-  compute_core_start_end_custom(0, op->num_even_sites*l->num_lattice_site_var, &start_even, &end_even, l, threading, l->num_lattice_site_var );
-  compute_core_start_end_custom(op->num_even_sites*l->num_lattice_site_var, l->inner_vector_size, &start_odd, &end_odd, l, threading, l->num_lattice_site_var );
+  start_even = 0;
+  end_even = start_odd = op->num_even_sites*l->num_lattice_site_var;
+  end_odd = l->inner_vector_size;
   
   vector_PRECISION tmp = op->buffer[0];
   
@@ -748,8 +734,9 @@ void g5D_coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PR
 void g5D_coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
     
   int start_even, end_even, start_odd, end_odd;
-  compute_core_start_end_custom(0, op->num_even_sites*l->num_lattice_site_var, &start_even, &end_even, l, threading, l->num_lattice_site_var );
-  compute_core_start_end_custom(op->num_even_sites*l->num_lattice_site_var, l->inner_vector_size, &start_odd, &end_odd, l, threading, l->num_lattice_site_var );
+  start_even = 0;
+  end_even = start_odd = op->num_even_sites*l->num_lattice_site_var;
+  end_odd = l->inner_vector_size;
 
   vector_PRECISION *tmp = op->buffer;
   

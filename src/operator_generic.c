@@ -267,22 +267,6 @@ void operator_PRECISION_test_routine( operator_PRECISION_struct *op, level_struc
   printf0("depth: 0, correctness of schwarz PRECISION Dirac operator: %le\n", diff );
   END_LOCKED_MASTER(threading)
 
-  if(threading->n_core > 1) {
-    apply_operator_PRECISION( vp2, vp1, &(l->p_PRECISION), l, threading );
-
-    SYNC_MASTER_TO_ALL(threading)
-    SYNC_CORES(threading)
-
-    START_LOCKED_MASTER(threading)
-    trans_back_PRECISION( vd3, vp2, op->translation_table, l, no_threading );
-    
-    vector_double_minus( vd4, vd3, vd2, 0, l->inner_vector_size, l );
-    diff = global_norm_double( vd4, 0, ivs, l, no_threading )/global_norm_double( vd3, 0, ivs, l, no_threading );
-
-    printf0("depth: 0, correctness of schwarz PRECISION Dirac operator with threading: %le\n", diff );
-    END_LOCKED_MASTER(threading) 
-  }    
-
   PUBLIC_FREE( vd1, complex_double, 4*ivs );
   PUBLIC_FREE( vp1, complex_PRECISION, 2*ivs );
 

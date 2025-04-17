@@ -76,8 +76,8 @@ void update_threading(struct Thread *threading, struct level_struct *l)
 
     while(1)
     {
-        compute_core_start_end(0, current->num_inner_lattice_sites,
-                threading->start_site+current->depth, threading->end_site+current->depth, current, threading);
+        *(threading->start_site+current->depth) = 0;
+        *(threading->end_site+current->depth) = current->num_inner_lattice_sites;
         threading->n_site[current->depth] = threading->end_site[current->depth] - threading->start_site[current->depth];
         threading->start_index[current->depth] = threading->start_site[current->depth]*current->num_lattice_site_var;
         threading->end_index[current->depth]   =   threading->end_site[current->depth]*current->num_lattice_site_var;
@@ -104,52 +104,6 @@ void setup_no_threading(struct Thread *no_threading, struct level_struct *l)
     no_threading->thread_barrier = &no_hyperthread_barrier;
     
 }
-
-
-void compute_core_start_end(int start, int end, int *core_start, int *core_end,
-        struct level_struct *l, struct Thread *threading)
-{
-    // due to loop unrolling in low level functions
-    int min_per_core = 3*40;
-//     printf0("min_per_core = %d\n", min_per_core );
-    compute_core_start_end_custom(start, end, core_start, core_end, l, threading, min_per_core);
-}
-
-
-void compute_core_start_end_custom(int start, int end, int *core_start, int *core_end,
-        struct level_struct *l, struct Thread *threading, int granularity)
-{
-    if(threading->thread != 0)
-    {
-        *core_start = 0;
-        *core_end = 0;
-        return;
-    }
-    // compute start and end indices for vector functions depending on thread
-    *core_start = start;
-    *core_end = end;
-
-    // custom defined minimum size per core
-    int min_per_core = granularity;
-
-    int length = end-start;
-    int per_core = ceil(((double)length/min_per_core)/threading->n_core)*min_per_core;
-    int cores;
-    if(per_core != 0)
-       cores = length/per_core;
-    else
-        cores = 0;
-    // there might be a remainder for one extra core
-    int remainder = length - cores*per_core;
-
-    *core_start += per_core*threading->core;
-    *core_end = *core_start;
-    if(threading->core < cores)
-        *core_end += per_core;
-    else if(threading->core == cores)
-        *core_end += remainder;
-}
-
 
 void finalize_common_thread_data( struct common_thread_data *common ) {
 }

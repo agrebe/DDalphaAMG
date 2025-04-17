@@ -160,8 +160,8 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
   // start and end indices for vector functions depending on thread
   ASSERT( g.mixed_precision );
   
-  int start;
-  int end;
+  int start = p->dp.v_start;
+  int end = p->dp.v_end;
   
   int j=-1, finish=0, iter=0, il, ol;
   complex_double gamma0 = 0;
@@ -180,9 +180,6 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
 #endif
   END_LOCKED_MASTER(threading)
   SYNC_MASTER_TO_ALL(threading)
-  // compute start and end indices for core
-  // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
-  compute_core_start_end(p->dp.v_start, p->dp.v_end, &start, &end, l, threading);
   
   // Outer loop in double precision
   for( ol=0; ol<p->dp.num_restart && finish==0; ol++ )  {
@@ -282,10 +279,8 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
     if ( g.coarse_time > 0 ) 
       printf0("|        coarse grid time: %-8.4lf seconds (%04.1lf%%)        |\n",
               g.coarse_time, 100*(g.coarse_time/(t1-t0)) );
-    printf0("|  consumed core minutes*: %-8.2le (solve only)           |\n", ((t1-t0)*g.num_processes*MAX(1,threading->n_core))/60.0 );
     printf0("|    max used mem/MPIproc: %-8.2le GB                     |\n", g.max_storage/1024.0 );
     printf0("+----------------------------------------------------------+\n");
-    printf0("*: only correct if #MPIprocs*#threads == #CPUs\n\n");
     END_MASTER(threading)
   }
 
@@ -323,11 +318,8 @@ void arnoldi_step_MP( vector_float *V, vector_float *Z, vector_float w,
   SYNC_CORES(threading)
   int i;
   // start and end indices for vector functions depending on thread
-  int start;
-  int end;
-  // compute start and end indices for core
-  // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
-  compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
+  int start = p->v_start;
+  int end = p->v_end;
   
   if ( prec != NULL ) {
     if ( p->kind == _LEFT ) {
@@ -390,11 +382,8 @@ void compute_solution_MP( vector_float x, vector_float *V, complex_double *y,
   
   int i, k;
   // start and end indices for vector functions depending on thread
-  int start;
-  int end;
-  // compute start and end indices for core
-  // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
-  compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
+  int start = p->v_start;
+  int end = p->v_end;
 
   START_MASTER(threading)
   

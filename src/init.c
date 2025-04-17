@@ -74,14 +74,8 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
     data_layout_init( l->next_level );
     neighbor_define( l->next_level );
 
-    // update threading struct with size info of level
-    update_threading(no_threading, l);
-
     END_LOCKED_MASTER(threading)
     SYNC_MASTER_TO_ALL(threading)
-
-    // update threading struct with size info of level
-    update_threading(threading, l);
     
     if ( g.mixed_precision ) {
       START_LOCKED_MASTER(threading)
@@ -209,9 +203,6 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
   START_LOCKED_MASTER(threading)
 #ifdef PARAMOUTPUT  
   if ( g.method >= -1 && g.print > 0 && !( g.vt.evaluation && g.vt.re_setup ) ) {
-    if(threading->n_core>1) {
-      printf0("\nrunning with %d openmp threads per core", threading->n_core );
-    }
     printf0("\n+----------------------------------------------------------+\n");
     if ( g.method > 0 ) {
       printf0("| %d-level method                                           |\n", l->level+1);

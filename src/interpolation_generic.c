@@ -101,7 +101,7 @@ void interpolate_PRECISION( vector_PRECISION phi, vector_PRECISION phi_c, level_
   END_LOCKED_MASTER(threading)
   SYNC_HYPERTHREADS(threading)
   
-  for ( i=threading->n_thread*threading->core + threading->thread; i<num_aggregates; i+=threading->n_core*threading->n_thread ) {
+  for ( i=0; i<num_aggregates; i++ ) {
     phi_pt   = phi + i*2*num_parent_eig_vect*aggregate_sites;
     phi_c_pt = l->next_level->gs_PRECISION.transfer_buffer + i*2*num_eig_vect;
     operator = l->is_PRECISION.operator + i*2*num_eig_vect*num_parent_eig_vect*aggregate_sites;
@@ -138,7 +138,7 @@ void interpolate3_PRECISION( vector_PRECISION phi, vector_PRECISION phi_c, level
   END_LOCKED_MASTER(threading)
   SYNC_HYPERTHREADS(threading)
   
-  for ( i=threading->n_thread*threading->core + threading->thread; i<num_aggregates; i+=threading->n_core*threading->n_thread ) {
+  for ( i=0; i<num_aggregates; i++ ) {
     phi_pt   = phi + i*2*num_parent_eig_vect*aggregate_sites;
     phi_c_pt = l->next_level->gs_PRECISION.transfer_buffer + i*2*num_eig_vect;
     int sign = 1;
@@ -175,7 +175,7 @@ void restrict_PRECISION( vector_PRECISION phi_c, vector_PRECISION phi, level_str
   complex_PRECISION *operator = l->is_PRECISION.operator, *phi_pt = phi,
                     *phi_c_pt = l->next_level->gs_PRECISION.transfer_buffer;
 
-  for ( i=threading->n_thread*threading->core + threading->thread; i<num_aggregates; i+=threading->n_core*threading->n_thread ) {   
+  for ( i=0; i<num_aggregates; i++ ) {   
     phi_pt   = phi + i*2*num_parent_eig_vect*aggregate_sites;
     phi_c_pt = l->next_level->gs_PRECISION.transfer_buffer + i*2*num_eig_vect;
     operator = l->is_PRECISION.operator + i*2*num_eig_vect*num_parent_eig_vect*aggregate_sites;

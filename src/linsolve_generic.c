@@ -223,9 +223,6 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
 * stored in p->x.                                                              
 *********************************************************************************/  
 
-  // start and end indices for vector functions depending on thread
-  int start;
-  int end;
 
   int j=-1, finish=0, iter=0, il, ol, res;
   complex_PRECISION gamma0 = 0;
@@ -245,9 +242,8 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
 #endif
   END_LOCKED_MASTER(threading)
   SYNC_MASTER_TO_ALL(threading)
-  // compute start and end indices for core
-  // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
-  compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
+  int start = p->v_start;
+  int end = p->v_end;
   
   for( ol=0; ol<p->num_restart && finish==0; ol++ )  {
   
@@ -368,7 +364,6 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
     if ( g.coarse_time > 0 ) 
       printf0("|        coarse grid time: %-8.4lf seconds (%04.1lf%%)        |\n",
               g.coarse_time, 100*(g.coarse_time/(t1-t0)) );
-    printf0("|  consumed core minutes*: %-8.2le (solve only)           |\n", ((t1-t0)*g.num_processes*MAX(1,threading->n_core))/60.0 );
     printf0("|    max used mem/MPIproc: %-8.2le GB                     |\n", g.max_storage/1024.0 );
     printf0("+----------------------------------------------------------+\n");
     printf0("*: only correct if #MPIprocs*#threads == #CPUs\n\n");
@@ -425,11 +420,8 @@ void bicgstab_PRECISION( gmres_PRECISION_struct *ps, level_struct *l, struct Thr
   int iter=0, maxiter;
   double tol, b_norm, r_norm, s_norm;
   // start and end indices for vector functions depending on thread
-  int start;
-  int end;
-  // compute start and end indices for core
-  // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
-  compute_core_start_end(ps->v_start, ps->v_end, &start, &end, l, threading);
+  int start = ps->v_start;
+  int end = ps->v_end;
   
   tol = (l->level==0 && g.num_levels > 1 && g.interpolation )?g.coarse_tol:g.bicgstab_tol;
   maxiter = 1000000; r = ps->r; b = ps->b; x = ps->x; p = ps->w;
@@ -512,8 +504,8 @@ void cgn_PRECISION( gmres_PRECISION_struct *ps, level_struct *l, struct Thread *
   int maxiter, iter=0;
   double tol, r0_norm, r_norm, prod_rr_old, t0=0, t1=0;
   // start and end indices for vector functions depending on thread
-  int start;
-  int end;
+  int start = ps->v_start;
+  int end = ps->v_end;
   
   b = ps->b; x = ps->x;
   r_old = ps->V[2]; r_new = ps->V[3]; r_true = ps->r;
@@ -524,10 +516,6 @@ void cgn_PRECISION( gmres_PRECISION_struct *ps, level_struct *l, struct Thread *
   START_MASTER(threading)
   if ( ps->timing || ps->print ) t0 = MPI_Wtime();
   END_MASTER(threading)
-
-  // compute start and end indices for core
-  // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
-  compute_core_start_end(ps->v_start, ps->v_end, &start, &end, l, threading);
 
   vector_PRECISION_define( x, 0, start, end, l );
   apply_operator_PRECISION( Dp, x, ps, l, threading );
@@ -625,7 +613,6 @@ void cgn_PRECISION( gmres_PRECISION_struct *ps, level_struct *l, struct Thread *
     START_MASTER(threading)
     if ( ps->timing ) printf0("| exact relative residual: ||r||/||b|| = %e      |\n", creal(beta/r0_norm) );
     printf0("| elapsed wall clock time: %-12g seconds            |\n", t1-t0 );
-    printf0("|  consumed core minutes*: %-8.2le (solve only)           |\n", ((t1-t0)*g.num_processes*MAX(1,threading->n_core))/60.0 );
     printf0("|    max used mem/MPIproc: %-8.2le GB                     |\n", g.max_storage/1024.0 );
     printf0("+----------------------------------------------------------+\n");
     printf0("*: only correct if #MPIprocs*#threads == #CPUs\n\n");
@@ -672,9 +659,8 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
     SYNC_CORES(threading)
     MPI_Request req;
     MPI_Status stat;
-    int start, end, i;
+    int start = p->v_start, end = p->v_end, i;
     const complex_PRECISION sigma = 0;
-    compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
     
     if ( j == 0 )
       vector_PRECISION_copy( Z[0], V[0], start, end, l );
@@ -739,9 +725,8 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
 #endif
     SYNC_MASTER_TO_ALL(threading)
     SYNC_CORES(threading)
-    int start, end, i;
+    int start = p->v_start, end = p->v_end, i;
     const complex_PRECISION sigma = 0;
-    compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
     
     if ( prec != NULL ) {
       if ( p->kind == _LEFT ) {
@@ -811,10 +796,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   SYNC_CORES(threading)
   int i;
   // start and end indices for vector functions depending on thread
-  int start, end;
-  // compute start and end indices for core
-  // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
-  compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
+  int start = p->v_start, end = p->v_end;
   
   if ( prec != NULL ) {
     if ( p->kind == _LEFT ) {
@@ -959,11 +941,8 @@ void compute_solution_PRECISION( vector_PRECISION x, vector_PRECISION *V, comple
   
   int i, k;
   // start and end indices for vector functions depending on thread
-  int start;
-  int end;
-  // compute start and end indices for core
-  // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
-  compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
+  int start = p->v_start;
+  int end = p->v_end;
 
   START_MASTER(threading)
   
@@ -1009,8 +988,6 @@ void local_minres_PRECISION( vector_PRECISION phi, vector_PRECISION eta, vector_
 * latest_iter -> cheaper residual update in the Schwarz method
 *********************************************************************************/
   
-  START_UNTHREADED_FUNCTION(threading)
-
   int i, end = (g.odd_even&&l->depth==0)?start+12*s->num_block_even_sites:start+s->block_vector_size,
       n = l->block_iter;
   vector_PRECISION Dr = s->local_minres_buffer[0];
@@ -1037,8 +1014,6 @@ void local_minres_PRECISION( vector_PRECISION phi, vector_PRECISION eta, vector_
   if ( latest_iter != NULL ) vector_PRECISION_copy( latest_iter, lphi, start, end, l );
   if ( phi != NULL ) vector_PRECISION_plus( phi, phi, lphi, start, end, l );
   vector_PRECISION_copy( eta, r, start, end, l );
-
-  END_UNTHREADED_FUNCTION(threading)
 }
 
 

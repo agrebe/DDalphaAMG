@@ -22,10 +22,6 @@
 #include "main.h"
 
 void rhs_define( vector_double rhs, level_struct *l, struct Thread *threading ) {
-  
-  // no hyperthreading here
-  if(threading->thread != 0)
-    return;
 
   int start = 0;
   int end = l->num_inner_lattice_sites * l->num_lattice_site_var;

@@ -1045,8 +1045,6 @@ void schwarz_PRECISION_setup( schwarz_PRECISION_struct *s, operator_double_struc
 void additive_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRECISION eta, const int cycles, int res, 
                                  schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
   
-  START_NO_HYPERTHREADS(threading)
-  
   int k, mu, i, nb = s->num_blocks;
   vector_PRECISION r = s->buf1, Dphi = s->buf4, latest_iter = s->buf2, x = s->buf3, latest_iter2 = s->buf5, swap = NULL;
   void (*block_op)() = (l->depth==0)?block_d_plus_clover_PRECISION:coarse_block_operator_PRECISION,
@@ -1054,9 +1052,8 @@ void additive_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, v
        (*n_boundary_op)() = (l->depth==0)?n_block_PRECISION_boundary_op:n_coarse_block_PRECISION_boundary_op,
        (*block_solve)() = (l->depth==0&&g.odd_even)?block_solve_oddeven_PRECISION:local_minres_PRECISION;
 
-  int nb_thread_start;
-  int nb_thread_end;
-  compute_core_start_end_custom(0, nb, &nb_thread_start, &nb_thread_end, l, threading, 1);
+  int nb_thread_start = 0;
+  int nb_thread_end = nb;
   
   SYNC_CORES(threading)
   
@@ -1221,14 +1218,11 @@ void additive_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, v
   END_LOCKED_MASTER(threading)
 #endif
 
-  END_NO_HYPERTHREADS(threading)
 }
 
 
 void red_black_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRECISION eta, const int cycles, int res,
                                   schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
-  
-  START_NO_HYPERTHREADS(threading)
   
   int k=0, mu, i, init_res = res, res_comm = res, step;
   vector_PRECISION r = s->buf1;
@@ -1248,10 +1242,11 @@ void red_black_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, 
   SYNC_CORES(threading)
        
   int block_thread_start[8], block_thread_end[8];
-  for ( i=0; i<8; i++ )
-     compute_core_start_end_custom(0, s->block_list_length[i], block_thread_start+i, block_thread_end+i, l, threading, 1 );
-  int start, end;
-  compute_core_start_end_custom(0, l->inner_vector_size, &start, &end, l, threading, l->num_lattice_site_var );
+  for ( i=0; i<8; i++ ) {
+    block_thread_start[i] = 0;
+    block_thread_end[i] = s->block_list_length[i];
+  }
+  int start = 0, end = l->inner_vector_size;
   
   if ( res == _NO_RES ) {
     vector_PRECISION_copy( r, eta, start, end, l );
@@ -1395,15 +1390,12 @@ void red_black_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, 
   printf0("\033[0m\n"); fflush(0);
   END_LOCKED_MASTER(threading)
 #endif
-  END_NO_HYPERTHREADS(threading)
 }
 
 
 void schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRECISION eta, const int cycles, int res,
                         schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
   
-  START_NO_HYPERTHREADS(threading)
-
   int color, k, mu, i,  nb = s->num_blocks, init_res = res;
   vector_PRECISION r = s->buf1;
   vector_PRECISION Dphi = s->buf4;
@@ -1416,9 +1408,8 @@ void schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRE
   
   SYNC_CORES(threading)
   
-  int nb_thread_start;
-  int nb_thread_end;
-  compute_core_start_end_custom(0, nb, &nb_thread_start, &nb_thread_end, l, threading, 1);
+  int nb_thread_start = 0;
+  int nb_thread_end = nb;
   
   if ( res == _NO_RES ) {
     vector_PRECISION_copy( r, eta, nb_thread_start*s->block_vector_size, nb_thread_end*s->block_vector_size, l );
@@ -1613,14 +1604,12 @@ void schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRE
   END_LOCKED_MASTER(threading)
 #endif
 
-  END_NO_HYPERTHREADS(threading)
 }
 
 
 void sixteen_color_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRECISION eta, const int cycles, int res, 
                                       schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
   
-  START_NO_HYPERTHREADS(threading)
   ASSERT( D_phi == NULL );
   
   if ( s->num_colors == 2 ) schwarz_PRECISION( phi, D_phi, eta, cycles, res, s, l, no_threading );
@@ -1635,9 +1624,8 @@ void sixteen_color_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_p
     int color_to_comm[16][2] = { {T,-1}, {X,+1}, {Y,+1}, {X,-1}, {Z,+1}, {Y,-1}, {X,+1}, {Y,+1},
                                 {T,+1}, {X,-1}, {Y,-1}, {X,+1}, {Z,-1}, {Y,+1}, {X,-1}, {Y,-1}  };
 
-    int nb_thread_start;
-    int nb_thread_end;
-    compute_core_start_end_custom(0, nb, &nb_thread_start, &nb_thread_end, l, threading, 1);
+    int nb_thread_start = 0;
+    int nb_thread_end = nb;
     
     SYNC_CORES(threading)
     
@@ -1768,7 +1756,6 @@ void sixteen_color_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_p
 #endif
   }
   
-  END_NO_HYPERTHREADS(threading)
 }
 
 
@@ -1781,14 +1768,12 @@ void trans_PRECISION( vector_PRECISION out, vector_double in, int *tt, level_str
 
   // this function seems to do some data reordering, barriers ensure that everything is in sync
   SYNC_CORES(threading)
-  START_NO_HYPERTHREADS(threading)
   for ( i=start; i<end; i++ ) {
     index = tt[i];
     out_pt = out + 12*index;
     in_pt  = in + 12*i;
     FOR12( *out_pt = (complex_PRECISION) *in_pt; out_pt++; in_pt++; )
   }
-  END_NO_HYPERTHREADS(threading)
   SYNC_CORES(threading)
 }
 
@@ -1802,14 +1787,12 @@ void trans_back_PRECISION( vector_double out, vector_PRECISION in, int *tt, leve
 
   // this function seems to do some data reordering, barriers ensure that everything is in sync
   SYNC_CORES(threading)
-  START_NO_HYPERTHREADS(threading)
   for ( i=start; i<end; i++ ) {
     index = tt[i];
     in_pt = in + 12*index;
     out_pt = out + 12*i;
     FOR12( *out_pt = (complex_double) *in_pt; out_pt++; in_pt++; )
   }
-  END_NO_HYPERTHREADS(threading)
   SYNC_CORES(threading)
 }
 
@@ -1824,8 +1807,6 @@ void schwarz_PRECISION_def( schwarz_PRECISION_struct *s, operator_double_struct 
 
 void schwarz_PRECISION_mvm_testfun( schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
   
-  START_UNTHREADED_FUNCTION(threading)
-
   int mu, i, nb = s->num_blocks;
   void (*block_op)() = (l->depth==0)?block_d_plus_clover_PRECISION:coarse_block_operator_PRECISION;
   void (*boundary_op)() = (l->depth==0)?block_PRECISION_boundary_op:coarse_block_PRECISION_boundary_op;
@@ -1865,7 +1846,5 @@ void schwarz_PRECISION_mvm_testfun( schwarz_PRECISION_struct *s, level_struct *l
   FREE( v1, complex_PRECISION, l->schwarz_vector_size );
   FREE( v2, complex_PRECISION, l->vector_size );
   FREE( v3, complex_PRECISION, l->vector_size );
-
-  END_UNTHREADED_FUNCTION(threading)
 }
 

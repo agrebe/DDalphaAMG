@@ -67,36 +67,6 @@
   } while(0)
 #endif
 
-
-#ifdef _M10TV
-  #define THREADED_VECTOR_FOR( i, start_index, end_index, expression, update, l, threading ) do{ \
-    int thread_start, thread_end; \
-    if ( l->depth == 0 ) { \
-      compute_core_start_end_custom(start_index, end_index, &thread_start, &thread_end, l, threading, 12); \
-      for ( i=thread_start; i<thread_end; ) \
-        FOR12( expression; update; ) \
-    } else { \
-      compute_core_start_end_custom(start_index, end_index, &thread_start, &thread_end, l, threading, 20); \
-      for ( i=thread_start; i<thread_end; ) \
-        FOR20( expression; update; ) \
-    } \
-  } while(0)
-#else
-  #define THREADED_VECTOR_FOR( i, start_index, end_index, expression, update, l, threading ) do{ \
-    int thread_start, thread_end; \
-    if ( l->depth == 0 ) { \
-      compute_core_start_end_custom(start_index, end_index, &thread_start, &thread_end, l, threading, 12); \
-      for ( i=thread_start; i<thread_end; ) \
-        FOR12( expression; update; ) \
-    } else { \
-      compute_core_start_end_custom(start_index, end_index, &thread_start, &thread_end, l, threading, 2); \
-      for ( i=thread_start; i<thread_end; ) \
-        FOR2( expression; update; ) \
-    } \
-  } while(0)
-#endif
-  
-
   struct Thread;
 
   complex_PRECISION global_inner_product_PRECISION( vector_PRECISION x, vector_PRECISION y, int start, int end, level_struct *l, struct Thread *threading );

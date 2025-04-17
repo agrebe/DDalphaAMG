@@ -46,10 +46,6 @@ double global_norm_MP( vector_float x, int start, int end, level_struct *l, stru
   int i;
   double local_alpha = 0, global_alpha = 0;
 
-  int thread_start;
-  int thread_end;
-  compute_core_start_end(start, end, &thread_start, &thread_end, l, threading);
-  
   SYNC_CORES(threading)
   for ( i=start; i<end; i++)
     local_alpha += (complex_double) NORM_SQUARE_float(x[i]);

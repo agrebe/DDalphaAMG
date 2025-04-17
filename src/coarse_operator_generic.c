@@ -195,8 +195,6 @@ void set_coarse_neighbor_coupling_PRECISION( vector_PRECISION spin_0_1, vector_P
 
 void coarse_block_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi, int start, schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
   
-  START_UNTHREADED_FUNCTION(threading)
-
   int n = s->num_block_sites, *length = s->dir_length, **index = s->index,
       *ind, *neighbor = s->op.neighbor_table, m = l->num_lattice_site_var;
   vector_PRECISION lphi = phi+start, leta = eta+start;
@@ -218,8 +216,6 @@ void coarse_block_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
       coarse_daggered_hopp_PRECISION( leta+m*j, lphi+m*k, D_pt, l );
     }
   }
-
-  END_UNTHREADED_FUNCTION(threading)
 }
 
 
@@ -379,8 +375,7 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 
 void g5D_apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op,
                                           level_struct *l, struct Thread *threading ) {
-  int start, end;
-  compute_core_start_end_custom(0, l->inner_vector_size, &start, &end, l, threading, l->num_lattice_site_var );
+  int start = 0, end = l->inner_vector_size;
   apply_coarse_operator_PRECISION( eta, phi, op, l, threading );
   SYNC_CORES(threading)
   coarse_gamma5_PRECISION( eta, eta, start, end, l );
@@ -438,17 +433,6 @@ void coarse_operator_PRECISION_test_routine( level_struct *l, struct Thread *thr
     }    
 
     END_LOCKED_MASTER(threading)
-    if(threading->n_core>1) {
-      interpolate3_PRECISION( vp1, vc1, l, threading );
-      restrict_PRECISION( vc2, vp1, l, threading );
-      START_LOCKED_MASTER(threading)
-      if ( !l->next_level->idle ) {
-        vector_PRECISION_minus( vc3, vc1, vc2, 0, civs, l->next_level );
-        diff = global_norm_PRECISION( vc3, 0, civs, l->next_level, no_threading ) / global_norm_PRECISION( vc1, 0, civs, l->next_level, no_threading );
-        printf0("depth: %d, correctness of ( P* P - 1 ) phi_c with threading: %le\n", l->depth, diff );
-      }
-      END_LOCKED_MASTER(threading)
-    }
     
     if ( l->level > 0 ) {
       START_LOCKED_MASTER(threading)
@@ -470,24 +454,6 @@ void coarse_operator_PRECISION_test_routine( level_struct *l, struct Thread *thr
       }      
       END_LOCKED_MASTER(threading)
 
-      if(threading->n_core>1) {
-        if ( !l->next_level->idle ) {
-          if ( l->level==1 && g.odd_even )
-            coarse_odd_even_PRECISION_test( vc3, vc1, l->next_level, threading );
-          else
-            apply_operator_PRECISION( vc3, vc1, &(l->next_level->p_PRECISION), l->next_level, threading );
-        }
-        START_LOCKED_MASTER(threading)
-        if ( !l->next_level->idle ) {
-          vector_PRECISION_minus( vc3, vc2, vc3, 0, civs, l->next_level );
-          diff = global_norm_PRECISION( vc3, 0, civs, l->next_level, no_threading ) / global_norm_PRECISION( vc2, 0, civs, l->next_level, no_threading );
-          if ( l->level==1 && g.odd_even )
-            printf0("depth: %d, correctness of odd even preconditioned ( P* D P - D_c ) phi_c with D_c threaded: %le\n", l->depth, diff );
-          else
-            printf0("depth: %d, correctness of ( P* D P - D_c ) phi_c with D_c threaded: %le\n", l->depth, diff );
-        }
-        END_LOCKED_MASTER(threading)
-      }
     }
     START_LOCKED_MASTER(threading)
 
