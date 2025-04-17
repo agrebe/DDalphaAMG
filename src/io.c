@@ -448,7 +448,7 @@ void vector_io( double *phi, char *filename, const int mode, level_struct *l ) {
     FREE( buffer[1].data, double, bar_size );
   }
   
-  norm = global_norm_double( (vector_double)phi, 0, l->inner_vector_size, l, no_threading );
+  norm = global_norm_double( (vector_double)phi, 0, l->inner_vector_size, l, NULL );
   printf0("norm: %e\n", norm );
   printf0("...done (%lf seconds)\n\n", t1-t0 ); 
 }
@@ -538,9 +538,9 @@ void vector_io_single_file( double *psi, double *lambda, char *filename, const i
             }
       if ( psi == NULL ) {
         if ( g.mixed_precision )
-          trans_float(l->is_float.test_vector[j], l->x, l->s_float.op.translation_table, l, no_threading);
+          trans_float(l->is_float.test_vector[j], l->x, l->s_float.op.translation_table, l, NULL);
         else
-          trans_double(l->is_double.test_vector[j], l->x, l->s_double.op.translation_table, l, no_threading);
+          trans_double(l->is_double.test_vector[j], l->x, l->s_double.op.translation_table, l, NULL);
       } else {
         vector_double_copy( ((vector_double)psi)+j*l->inner_vector_size, l->x, 0, l->inner_vector_size, l );
       }
@@ -557,9 +557,9 @@ void vector_io_single_file( double *psi, double *lambda, char *filename, const i
     for ( j=0; j<n; j++ ){
       if ( psi == NULL ) {
         if ( g.mixed_precision )
-          trans_back_float( l->x, l->is_float.test_vector[j], l->s_float.op.translation_table, l, no_threading );
+          trans_back_float( l->x, l->is_float.test_vector[j], l->s_float.op.translation_table, l, NULL );
         else
-          trans_back_double( l->x, l->is_double.test_vector[j], l->s_double.op.translation_table, l, no_threading );
+          trans_back_double( l->x, l->is_double.test_vector[j], l->s_double.op.translation_table, l, NULL );
       } else {
         vector_double_copy( l->x, ((complex_double*)psi)+j*l->inner_vector_size, 0, l->inner_vector_size, l );
       }

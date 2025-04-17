@@ -43,10 +43,8 @@ void test_routine( level_struct *l, struct Thread *threading ) {
     }
   }
 
-  START_LOCKED_MASTER(threading)
   printf0("\n");
   prof_init( l );
-  END_LOCKED_MASTER(threading)
 
   if ( g.restart > 0 )
     rhs_define( g.p.b, l, threading );

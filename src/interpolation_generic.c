@@ -77,14 +77,12 @@ void define_interpolation_PRECISION_operator( complex_PRECISION **interpolation,
   int start = 0;
   int end = l->num_inner_lattice_sites * l->num_lattice_site_var;
       
-  SYNC_CORES(threading)
   operator += start*num_eig_vect;
   for ( int i=start; i<end; i++ )
     for ( j=0; j<num_eig_vect; j++ ) {
       *operator = interpolation[j][i];
       operator++;
     }
-  SYNC_CORES(threading)
 }
 
 
@@ -96,10 +94,7 @@ void interpolate_PRECISION( vector_PRECISION phi, vector_PRECISION phi_c, level_
   complex_PRECISION *operator = l->is_PRECISION.operator, *phi_pt = phi,
                     *phi_c_pt = l->next_level->gs_PRECISION.transfer_buffer;
                     
-  START_LOCKED_MASTER(threading)
   vector_PRECISION_distribute( phi_c_pt, phi_c, l->next_level );
-  END_LOCKED_MASTER(threading)
-  SYNC_HYPERTHREADS(threading)
   
   for ( i=0; i<num_aggregates; i++ ) {
     phi_pt   = phi + i*2*num_parent_eig_vect*aggregate_sites;
@@ -121,7 +116,6 @@ void interpolate_PRECISION( vector_PRECISION phi, vector_PRECISION phi_c, level_
     
   PROF_PRECISION_STOP( _PR, 1, threading );
 
-  SYNC_HYPERTHREADS(threading)
 }
 
 
@@ -133,10 +127,7 @@ void interpolate3_PRECISION( vector_PRECISION phi, vector_PRECISION phi_c, level
   complex_PRECISION *operator = l->is_PRECISION.operator, *phi_pt = phi,
                     *phi_c_pt = l->next_level->gs_PRECISION.transfer_buffer;
   
-  START_LOCKED_MASTER(threading)
   vector_PRECISION_distribute( phi_c_pt, phi_c, l->next_level );
-  END_LOCKED_MASTER(threading)
-  SYNC_HYPERTHREADS(threading)
   
   for ( i=0; i<num_aggregates; i++ ) {
     phi_pt   = phi + i*2*num_parent_eig_vect*aggregate_sites;
@@ -160,14 +151,11 @@ void interpolate3_PRECISION( vector_PRECISION phi, vector_PRECISION phi_c, level
   }
   PROF_PRECISION_STOP( _PR, 1, threading );
 
-  SYNC_HYPERTHREADS(threading)
 }
 
 
 void restrict_PRECISION( vector_PRECISION phi_c, vector_PRECISION phi, level_struct *l, struct Thread *threading ) {
   
-  SYNC_CORES(threading)
-  SYNC_HYPERTHREADS(threading)
 
   PROF_PRECISION_START( _PR, threading );
   int i, j, k, k1, k2, num_aggregates = l->is_PRECISION.num_agg, num_eig_vect = l->num_eig_vect, sign = 1,
@@ -197,9 +185,6 @@ void restrict_PRECISION( vector_PRECISION phi_c, vector_PRECISION phi, level_str
     }
   }
   
-  SYNC_HYPERTHREADS(threading)
-  START_LOCKED_MASTER(threading)
   vector_PRECISION_gather( phi_c, l->next_level->gs_PRECISION.transfer_buffer, l->next_level );
-  END_LOCKED_MASTER(threading)
   PROF_PRECISION_STOP( _PR, 1, threading );
 }

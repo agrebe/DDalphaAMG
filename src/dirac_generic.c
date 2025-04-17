@@ -30,16 +30,12 @@ void clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, config_PRECIS
       FOR12( *eta = (*phi)*(*clover); eta++; phi++; clover++; )
     }
   } else {
-    START_MASTER(threading)
     PROF_PRECISION_START( _SC );
-    END_MASTER(threading)
     while ( eta < eta_end ) {
       site_clover_PRECISION( eta, phi, clover );
       eta+=12; phi+=12; clover+=42;
     }
-    START_MASTER(threading)
     PROF_PRECISION_STOP( _SC, 1 );
-    END_MASTER(threading)
   }
 }
 
@@ -158,7 +154,6 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
   vector_PRECISION phi_pt, eta_pt, end_pt;
   config_PRECISION D_pt;
   
-  SYNC_MASTER_TO_ALL(threading)
 
   if ( g.csw == 0.0 ) {
     vector_PRECISION_scale( eta, phi, op->shift, start, end, l );
@@ -166,9 +161,7 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
     clover_PRECISION( eta+start, phi+start, op->clover+((start/12)*42), end-start, l, threading );
   }
   
-  START_MASTER(threading)
   PROF_PRECISION_START( _NC ); 
-  END_MASTER(threading)
   
   for ( i=start/2, phi_pt=phi+start; i<end/2; i+=6, phi_pt+=12 ) {
     prp_T_PRECISION( op->prnT+i, phi_pt );
@@ -177,12 +170,10 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
     prp_X_PRECISION( op->prnX+i, phi_pt );
   }
   // start communication in negative direction
-  START_LOCKED_MASTER(threading)
   ghost_sendrecv_PRECISION( op->prnT, T, -1, &(op->c), _FULL_SYSTEM, l );
   ghost_sendrecv_PRECISION( op->prnZ, Z, -1, &(op->c), _FULL_SYSTEM, l );
   ghost_sendrecv_PRECISION( op->prnY, Y, -1, &(op->c), _FULL_SYSTEM, l );
   ghost_sendrecv_PRECISION( op->prnX, X, -1, &(op->c), _FULL_SYSTEM, l );
-  END_LOCKED_MASTER(threading) 
   
   // project plus dir and multiply with U dagger
   for ( phi_pt=phi+start, end_pt=phi+end, D_pt = op->D+(start*3), nb_pt=neighbor+((start/12)*4); phi_pt<end_pt; phi_pt+=12 ) {
@@ -209,7 +200,6 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
   }
   
   // start communication in positive direction
-  START_LOCKED_MASTER(threading)
   ghost_sendrecv_PRECISION( op->prpT, T, +1, &(op->c), _FULL_SYSTEM, l );
   ghost_sendrecv_PRECISION( op->prpZ, Z, +1, &(op->c), _FULL_SYSTEM, l );
   ghost_sendrecv_PRECISION( op->prpY, Y, +1, &(op->c), _FULL_SYSTEM, l );
@@ -219,7 +209,6 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
   ghost_wait_PRECISION( op->prnZ, Z, -1, &(op->c), _FULL_SYSTEM, l );
   ghost_wait_PRECISION( op->prnY, Y, -1, &(op->c), _FULL_SYSTEM, l );
   ghost_wait_PRECISION( op->prnX, X, -1, &(op->c), _FULL_SYSTEM, l );
-  END_LOCKED_MASTER(threading)
   
   // multiply with U and lift up minus dir
   for ( eta_pt=eta+start, end_pt=eta+end, D_pt = op->D+start*3, nb_pt=neighbor+(start/12)*4; eta_pt<end_pt; eta_pt+=12 ) {
@@ -246,12 +235,10 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
   }
   
   // wait for communication in positive direction
-  START_LOCKED_MASTER(threading)
   ghost_wait_PRECISION( op->prpT, T, +1, &(op->c), _FULL_SYSTEM, l );
   ghost_wait_PRECISION( op->prpZ, Z, +1, &(op->c), _FULL_SYSTEM, l );
   ghost_wait_PRECISION( op->prpY, Y, +1, &(op->c), _FULL_SYSTEM, l );
   ghost_wait_PRECISION( op->prpX, X, +1, &(op->c), _FULL_SYSTEM, l );
-  END_LOCKED_MASTER(threading)
   
   // lift up plus dir
   for ( i=start/2, eta_pt=eta+start; i<end/2; i+=6, eta_pt+=12 ) {
@@ -261,11 +248,8 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
     pbn_su3_X_PRECISION( op->prpX+i, eta_pt );
   }
   
-  START_MASTER(threading)
   PROF_PRECISION_STOP( _NC, 1 );
-  END_MASTER(threading)
   
-  SYNC_MASTER_TO_ALL(threading)
 }
 
 
@@ -290,9 +274,7 @@ void gamma5_PRECISION( vector_PRECISION eta, vector_PRECISION phi, level_struct 
 
 void g5D_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
   d_plus_clover_PRECISION( eta, phi, op, l, threading );
-  SYNC_CORES(threading)
   gamma5_PRECISION( eta, eta, l, threading );
-  SYNC_CORES(threading)
 }
 
 
@@ -527,9 +509,7 @@ void shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION sh
         clover += 1 + SQUARE(k);
       }
     }
-    START_LOCKED_MASTER(threading)
     op->shift = 4+shift;
-    END_LOCKED_MASTER(threading)
   }
 }
 
@@ -577,7 +557,6 @@ void g5D_shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISIO
       }
     }
     
-    SYNC_CORES(threading)
   }
 }
 

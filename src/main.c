@@ -23,8 +23,6 @@
 
 global_struct g;
 struct common_thread_data *commonthreaddata;
-struct Thread *no_threading;
-
 int main( int argc, char **argv ) {
     
   level_struct l;
@@ -44,9 +42,6 @@ int main( int argc, char **argv ) {
   }
   
   method_init( &argc, &argv, &l );
-  
-  no_threading = (struct Thread *)malloc(sizeof(struct Thread));
-  setup_no_threading(no_threading, &l);
   
   MALLOC( hopp, complex_double, 3*l.inner_vector_size );
   if ( g.two_cnfgs ) {

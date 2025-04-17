@@ -230,7 +230,6 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
   complex_PRECISION beta = 0;
 
   double norm_r0=1, gamma_jp1=1, t0=0, t1=0;
-  START_LOCKED_MASTER(threading)
 
   if ( l->depth==0 && ( p->timing || p->print ) ) prof_init( l );
 
@@ -240,8 +239,6 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)
   if ( p->print && g.print > 0 ) printf0("+----------------------------------------------------------+\n");
 #endif
-  END_LOCKED_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
   int start = p->v_start;
   int end = p->v_end;
   
@@ -256,9 +253,7 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
         apply_operator_PRECISION( p->Z[0], p->x, p, l, threading );
         if ( p->shift ) vector_PRECISION_saxpy( p->Z[0], p->Z[0], p->x, p->shift, start, end, l );
         if ( g.method == 5 ) {
-          START_LOCKED_MASTER(threading)
           g.bicgstab_tol = (!g.mixed_precision)?p->tol:MAX( 1E-3, (p->tol/(gamma_jp1/norm_r0))*5E-1 );
-          END_LOCKED_MASTER(threading)
         }
         p->preconditioner( p->w, NULL, p->Z[0], _NO_RES, l, threading );
       } else {
@@ -267,10 +262,7 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
       vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
     }
     gamma0 = (complex_PRECISION) global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading ); // gamma_0 = norm(r)
-    START_MASTER(threading)
     p->gamma[0] = gamma0;
-    END_MASTER(threading)
-    SYNC_MASTER_TO_ALL(threading)
     
     if( ol == 0) {
       norm_r0 = creal(p->gamma[0]);
@@ -286,9 +278,7 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
     for( il=0; il<p->restart_length && finish==0; il++) {
       j = il; iter++;
       if ( g.method == 5 ) {
-        START_LOCKED_MASTER(threading)
         g.bicgstab_tol = (!g.mixed_precision)?p->tol:MAX( 1E-3, (p->tol/(gamma_jp1/norm_r0))*5E-1 );
-        END_LOCKED_MASTER(threading)
       }
       
       // one step of Arnoldi
@@ -317,17 +307,13 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
         
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)
         if ( iter%10 == 0 || p->preconditioner != NULL || l->depth > 0 ) {
-          START_MASTER(threading)
           if ( p->print && g.print > 0 )
             printf0("| approx. rel. res. after  %-6d iterations: %e |\n", iter, gamma_jp1/norm_r0 );
-          END_MASTER(threading)
         }
 #endif
         if( gamma_jp1/norm_r0 < p->tol || gamma_jp1/norm_r0 > 1E+5 ) { // if satisfied ... stop
           finish = 1;
-          START_MASTER(threading)
             if ( gamma_jp1/norm_r0 > 1E+5 ) printf0("Divergence of fgmres_PRECISION, iter = %d, level=%d\n", iter, l->level );
-          END_MASTER(threading)
         }
       } else {
         printf0("depth: %d, iter: %d, p->H(%d,%d) = %+lf+%lfi\n", l->depth, iter, j+1, j, CSPLIT( p->H[j][j+1] ) );
@@ -339,9 +325,7 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
                                 p->y, p->gamma, p->H, j, (res==_NO_RES)?ol:1, p, l, threading );
   } // end of fgmres
   
-  START_LOCKED_MASTER(threading)
   if ( l->depth == 0 ) { t1 = MPI_Wtime(); g.total_time = t1-t0; g.iter_count = iter; g.norm_res = gamma_jp1/norm_r0; }
-  END_LOCKED_MASTER(threading)
   
   if ( p->print ) {
 #ifdef FGMRES_RESTEST
@@ -351,7 +335,6 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
 #else
     beta = gamma_jp1;
 #endif
-    START_MASTER(threading)
     g.norm_res = creal(beta)/norm_r0;
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)
     if ( g.print > 0 ) printf0("+----------------------------------------------------------+\n\n");
@@ -367,41 +350,32 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
     printf0("|    max used mem/MPIproc: %-8.2le GB                     |\n", g.max_storage/1024.0 );
     printf0("+----------------------------------------------------------+\n");
     printf0("*: only correct if #MPIprocs*#threads == #CPUs\n\n");
-    END_MASTER(threading)
   }
   
 #ifdef COARSE_RES
   if ( l->depth > 0 ) {
-    START_MASTER(threading)
     char number[3]; sprintf( number, "%2d", 31+l->depth ); printf0("\033[1;%2sm|", number );
     printf0(" - depth: %d, gmres iter: %2d, approx rel res: %le |", l->depth, iter, gamma_jp1/norm_r0 );
     printf0("\033[0m\n"); fflush(0);
-    END_MASTER(threading)
   }
 #endif
 
   if ( l->level == 0 ) {
-    START_LOCKED_MASTER(threading)
     g.coarse_iter_count += iter;
-    END_LOCKED_MASTER(threading)
   }
     
   if ( l->depth == 0 && g.vt.p_end != NULL  ) {
     if ( g.vt.p_end != NULL ) {
-      START_LOCKED_MASTER(threading)
       printf0("solve iter: %d\n", iter );
       printf0("solve time: %le seconds\n", t1-t0 );
       g.vt.p_end->values[_SLV_TIME] += (t1-t0)/((double)g.vt.average_over);
       g.vt.p_end->values[_SLV_ITER] += iter/((double)g.vt.average_over);
       g.vt.p_end->values[_CRS_ITER] += (((double)g.coarse_iter_count)/((double)iter))/((double)g.vt.average_over);
       g.vt.p_end->values[_CRS_TIME] += g.coarse_time/((double)g.vt.average_over);
-    END_LOCKED_MASTER(threading)
     }
   }
   if ( l->depth == 0 && ( p->timing || p->print ) && !(g.vt.p_end != NULL )  ) {
-    START_MASTER(threading)
     if ( g.method != 6 ) prof_print( l );
-    END_MASTER(threading)
   }
   
   return iter;
@@ -436,9 +410,7 @@ void bicgstab_PRECISION( gmres_PRECISION_struct *ps, level_struct *l, struct Thr
   b_norm = global_norm_PRECISION( b, ps->v_start, ps->v_end, l, threading );
   r_norm = b_norm;
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)  
-  START_MASTER(threading)
   printf0("+----------------------------------------------------------+\n");
-  END_MASTER(threading)
 #endif
   while ( r_norm/b_norm > tol && iter < maxiter ) {
     iter++;
@@ -446,9 +418,7 @@ void bicgstab_PRECISION( gmres_PRECISION_struct *ps, level_struct *l, struct Thr
     rho_old = rho;
     rho = global_inner_product_PRECISION( r_tilde, r, ps->v_start, ps->v_end, l, threading );
     if ( rho == 0 ) {
-      START_MASTER(threading)
       printf0("rho = 0: BiCGstab did not converge.\n");
-      END_MASTER(threading)
       break;
     }
     
@@ -478,16 +448,12 @@ void bicgstab_PRECISION( gmres_PRECISION_struct *ps, level_struct *l, struct Thr
     
     r_norm = global_norm_PRECISION( r, ps->v_start, ps->v_end, l, threading );
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)
-    START_MASTER(threading)
     if ( iter % 100 == 0 ) printf0("| biCGstab relres: %12.6le,  iterations: %-8d     |\n", r_norm/b_norm, iter );
-    END_MASTER(threading)
 #endif
   }
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)
-  START_MASTER(threading)
   printf0("| biCGstab relres: %12.6le,  iterations: %-8d     |\n", r_norm/b_norm, iter );
   printf0("+----------------------------------------------------------+\n");
-  END_MASTER(threading)
 #endif
 }
 
@@ -513,9 +479,7 @@ void cgn_PRECISION( gmres_PRECISION_struct *ps, level_struct *l, struct Thread *
   tol = (l->level==0 && g.num_levels > 1 && g.interpolation )?g.coarse_tol:ps->tol;
   maxiter = ps->num_restart;
   
-  START_MASTER(threading)
   if ( ps->timing || ps->print ) t0 = MPI_Wtime();
-  END_MASTER(threading)
 
   vector_PRECISION_define( x, 0, start, end, l );
   apply_operator_PRECISION( Dp, x, ps, l, threading );
@@ -527,9 +491,7 @@ void cgn_PRECISION( gmres_PRECISION_struct *ps, level_struct *l, struct Thread *
   prod_rr_old = global_inner_product_PRECISION( r_old, r_old, ps->v_start, ps->v_end, l, threading );
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)
   if ( ps->print ) {
-    START_MASTER(threading)
     printf0("\n+----------------------------------------------------------+\n");
-    END_MASTER(threading)
   }  
 #endif
   while ( sqrt(prod_rr_old) / r0_norm > tol && iter < maxiter ) {
@@ -551,9 +513,7 @@ void cgn_PRECISION( gmres_PRECISION_struct *ps, level_struct *l, struct Thread *
     prod_rr_old = gamma;
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)    
     if ( iter%100 == 0 && ps->print >=1 ) {
-      START_MASTER(threading)
       printf0("|      NE rel. res. after  %-6d iterations: %e |\n", iter, sqrt(prod_rr_old)/r0_norm );
-      END_MASTER(threading)
     }
 #endif
   }
@@ -564,11 +524,9 @@ void cgn_PRECISION( gmres_PRECISION_struct *ps, level_struct *l, struct Thread *
   r_norm = creal(global_norm_PRECISION( r_true, ps->v_start, ps->v_end, l, threading ));
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)  
   if ( ps->print ) {
-    START_MASTER(threading)
     printf0("+----------------------------------------------------------+\n");
     printf0("| switching to CGNR, iter  %-6d true r res: %e |\n", iter, r_norm/r0_norm );
     printf0("+----------------------------------------------------------+\n");
-    END_MASTER(threading)
   }
 #endif
   
@@ -594,32 +552,25 @@ void cgn_PRECISION( gmres_PRECISION_struct *ps, level_struct *l, struct Thread *
     prod_rr_old = gamma;
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)    
     if ( iter%100 ==  0 && ps->print >=1 ) {
-      START_MASTER(threading)
       printf0("|         rel. res. after  %-6d iterations: %e |\n", iter, r_norm/r0_norm );
-      END_MASTER(threading)
     }
 #endif
   }
   
   if ( ps->timing || ps->print ) t1 = MPI_Wtime();
   if ( ps->print ) {
-    START_MASTER(threading)
     printf0("+----------------------------------------------------------+\n");
     printf0("|          CGN iterations: %-6d                          |\n", iter );
-    END_MASTER(threading)
     apply_operator_PRECISION( Dp, x, ps, l, threading );
     vector_PRECISION_minus( pp, b, Dp, start, end, l );
     beta = creal(global_norm_PRECISION( pp, ps->v_start, ps->v_end, l, threading ));
-    START_MASTER(threading)
     if ( ps->timing ) printf0("| exact relative residual: ||r||/||b|| = %e      |\n", creal(beta/r0_norm) );
     printf0("| elapsed wall clock time: %-12g seconds            |\n", t1-t0 );
     printf0("|    max used mem/MPIproc: %-8.2le GB                     |\n", g.max_storage/1024.0 );
     printf0("+----------------------------------------------------------+\n");
     printf0("*: only correct if #MPIprocs*#threads == #CPUs\n\n");
-    END_MASTER(threading)
   }
   
-  START_LOCKED_MASTER(threading)
   if ( l->level == 0 )
     g.coarse_iter_count += iter;
 
@@ -629,7 +580,6 @@ void cgn_PRECISION( gmres_PRECISION_struct *ps, level_struct *l, struct Thread *
       g.vt.p_end->values[_SLV_ITER] += (iter)/((double)g.vt.average_over);
     }
   }
-  END_LOCKED_MASTER(threading)
 }
 
 
@@ -655,8 +605,6 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
 #ifdef SINGLE_ALLREDUCE_ARNOLDI
 #ifdef PIPELINED_ARNOLDI
   if ( l->level == 0 && l->depth > 0 ) {
-    SYNC_MASTER_TO_ALL(threading)
-    SYNC_CORES(threading)
     MPI_Request req;
     MPI_Status stat;
     int start = p->v_start, end = p->v_end, i;
@@ -669,7 +617,6 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   
     complex_PRECISION tmp[j+1];
     process_multi_inner_product_PRECISION( j+1, tmp, V, V[j], p->v_start, p->v_end, l, threading );
-    START_MASTER(threading)
     PROF_PRECISION_START( _ALLR );
     for( i=0; i<=j; i++ ) {
       buffer[i] = tmp[i];
@@ -682,11 +629,9 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
         H[MAX(0,j-1)][i] = buffer[i];
     }
     PROF_PRECISION_STOP( _ALLR, 1 );
-    END_MASTER(threading)
     
     apply_operator_PRECISION( Z[j+1], Z[j], p, l, threading );
     
-    START_MASTER(threading)
     PROF_PRECISION_START( _ALLR );
     if ( g.num_processes > 1 ) {
       MPI_Wait( &req, &stat );
@@ -697,20 +642,15 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
         H[j-1][j] -= conj( H[j-1][i] )*H[j-1][i];
     }
     H[MAX(0,j-1)][j] = sqrt( creal( H[MAX(0,j-1)][j] ) );
-    END_MASTER(threading)
-    SYNC_MASTER_TO_ALL(threading) 
     
     for( i=0; i<j; i++ )
       vector_PRECISION_saxpy( V[j], V[j], V[i], -H[j-1][i], start, end, l );
     
     vector_PRECISION_real_scale( V[j], V[j], 1/H[MAX(0,j-1)][j], start, end, l );
     
-    START_MASTER(threading)
     if ( j > 0 ) {
       H[j-1][j-1] += sigma;
     }
-    END_MASTER(threading)
-    SYNC_MASTER_TO_ALL(threading)
     
     if ( j == 0 ) {
       if ( sigma ) vector_PRECISION_saxpy( Z[j+1], Z[j+1], Z[j], -sigma, start, end, l );
@@ -723,8 +663,6 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
     
   } else {
 #endif
-    SYNC_MASTER_TO_ALL(threading)
-    SYNC_CORES(threading)
     int start = p->v_start, end = p->v_end, i;
     const complex_PRECISION sigma = 0;
     
@@ -757,7 +695,6 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
     
     complex_PRECISION tmp[j+2];
     process_multi_inner_product_PRECISION( j+2, tmp, V, V[j+1], p->v_start, p->v_end, l, threading );
-    START_MASTER(threading)
     for( i=0; i<=j+1; i++ ) {
       buffer[i] = tmp[i];
     }
@@ -772,28 +709,19 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
     }  
     for ( i=0; i<=j; i++ )
       H[j][j+1] -= conj( H[j][i] )*H[j][i];
-    END_MASTER(threading)
-    SYNC_MASTER_TO_ALL(threading)
     if ( creal( H[j][j+1] ) < 0 )
       return 0;
-    START_MASTER(threading)
     H[j][j+1] = sqrt( creal( H[j][j+1] ) );
-    END_MASTER(threading)
-    SYNC_MASTER_TO_ALL(threading)
 
     for( i=0; i<=j; i++ )
       vector_PRECISION_saxpy( V[j+1], V[j+1], V[i], -H[j][i], start, end, l );
     
     vector_PRECISION_real_scale( V[j+1], V[j+1], 1/H[j][j+1], start, end, l );
-    START_LOCKED_MASTER(threading)
     H[j][j] += sigma;
-    END_LOCKED_MASTER(threading)
 #ifdef PIPELINED_ARNOLDI
   }
 #endif
 #else
-  SYNC_MASTER_TO_ALL(threading)
-  SYNC_CORES(threading)
   int i;
   // start and end indices for vector functions depending on thread
   int start = p->v_start, end = p->v_end;
@@ -825,7 +753,6 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   // orthogonalization
   complex_PRECISION tmp[j+1];
   process_multi_inner_product_PRECISION( j+1, tmp, V, w, p->v_start, p->v_end, l, threading );
-  START_MASTER(threading)
   for( i=0; i<=j; i++ )
     buffer[i] = tmp[i];
   if ( g.num_processes > 1 ) {
@@ -836,8 +763,6 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
     for( i=0; i<=j; i++ )
       H[j][i] = buffer[i];
   }
-  END_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
 
   // subtract other vectors from last one
   // equivalent to
@@ -857,7 +782,6 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
 #ifdef REORTH
   // re-orthogonalization
   process_multi_inner_product_PRECISION( j+1, tmp, V, w, p->v_start, p->v_end, l, threading );
-  START_MASTER(threading)
   for( i=0; i<=j; i++ )
     buffer[i] = tmp[i];
   if ( g.num_processes > 1 ) {
@@ -869,18 +793,13 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   for( i=0; i<=j; i++ )
     H[j][i] += tmp[i];
   
-  END_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
   for( i=0; i<=j; i++ )
     vector_PRECISION_saxpy( w, w, V[i], -tmp[i], start, end, l );
 #endif
   
   // normalization
   complex_PRECISION tmp2 = global_norm_PRECISION( w, p->v_start, p->v_end, l, threading );
-  START_MASTER(threading)
   H[j][j+1] = tmp2;
-  END_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
   
   // V_j+1 = w / H_j+1,j
   if ( cabs_PRECISION( H[j][j+1] ) > 1e-15 )
@@ -904,9 +823,6 @@ void qr_update_PRECISION( complex_PRECISION **H, complex_PRECISION *s,
 * - int j: Denotes current iteration.
 *********************************************************************************/  
 
-  SYNC_HYPERTHREADS(threading)
-  SYNC_CORES(threading)
-  START_MASTER(threading)
   
   PROF_PRECISION_START( _SMALL1 );
   
@@ -930,8 +846,6 @@ void qr_update_PRECISION( complex_PRECISION **H, complex_PRECISION *s,
   
   PROF_PRECISION_STOP( _SMALL1, 6*j+6 );
   
-  END_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
 }
 
 
@@ -944,7 +858,6 @@ void compute_solution_PRECISION( vector_PRECISION x, vector_PRECISION *V, comple
   int start = p->v_start;
   int end = p->v_end;
 
-  START_MASTER(threading)
   
   PROF_PRECISION_START( _SMALL2 );
   
@@ -959,8 +872,6 @@ void compute_solution_PRECISION( vector_PRECISION x, vector_PRECISION *V, comple
   
   PROF_PRECISION_STOP( _SMALL2, ((j+1)*(j+2))/2 + j+1 );
   
-  END_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
   
   // x = x + V*y
   if ( ol ) {
@@ -1002,7 +913,7 @@ void local_minres_PRECISION( vector_PRECISION phi, vector_PRECISION eta, vector_
   
   for ( i=0; i<n; i++ ) {
     // Dr = blockD*r
-    block_op( Dr, r, start, s, l, no_threading );
+    block_op( Dr, r, start, s, l, NULL );
     // alpha = <Dr,r>/<Dr,Dr>
     alpha = local_xy_over_xx_PRECISION( Dr, r, start, end, l );
     // phi += alpha * r
@@ -1037,33 +948,33 @@ void fgcr_PRECISION( gmres_PRECISION_struct *p, level_struct *l ) {
     if( ol == 0 && p->initial_guess_zero ) {
       vector_PRECISION_copy( p->r, p->b, 0, l->inner_vector_size, l );
     } else {
-      apply_operator_PRECISION( p->w, p->x, p, l, no_threading ); // compute w = D*x
+      apply_operator_PRECISION( p->w, p->x, p, l, NULL ); // compute w = D*x
       vector_PRECISION_minus( p->r, p->b, p->w, p->v_start, p->v_end, l ); // compute r = b - w
     }
     
     if( ol == 0) {
-      norm_r0 = (complex_PRECISION) global_norm_PRECISION( p->r, p->v_start, p->v_end, l, no_threading );
+      norm_r0 = (complex_PRECISION) global_norm_PRECISION( p->r, p->v_start, p->v_end, l, NULL );
     }
     
     for( il=0; il<p->restart_length && finish==0; il++ ) {
       
       j = il; iter++;
       
-      p->preconditioner( p->V[j], p->r, _NO_RES, l, no_threading );
-      apply_operator_PRECISION( p->Z[j], p->V[j], p, l, no_threading );
+      p->preconditioner( p->V[j], p->r, _NO_RES, l, NULL );
+      apply_operator_PRECISION( p->Z[j], p->V[j], p, l, NULL );
       
       for( i=0; i<j; i++ ) {
-        beta = global_inner_product_PRECISION( p->Z[i], p->Z[j], p->v_start, p->v_end, l, no_threading ) / p->gamma[i];
+        beta = global_inner_product_PRECISION( p->Z[i], p->Z[j], p->v_start, p->v_end, l, NULL ) / p->gamma[i];
         vector_PRECISION_saxpy( p->V[j], p->V[j], p->V[i], -beta, p->v_start, p->v_end, l );
         vector_PRECISION_saxpy( p->Z[j], p->Z[j], p->Z[i], -beta, p->v_start, p->v_end, l );
       }
       
-      p->gamma[j] = global_inner_product_PRECISION( p->Z[j], p->Z[j], p->v_start, p->v_end, l, no_threading );
-      alpha = global_inner_product_PRECISION( p->Z[j], p->r, p->v_start, p->v_end, l, no_threading ) / p->gamma[j];
+      p->gamma[j] = global_inner_product_PRECISION( p->Z[j], p->Z[j], p->v_start, p->v_end, l, NULL );
+      alpha = global_inner_product_PRECISION( p->Z[j], p->r, p->v_start, p->v_end, l, NULL ) / p->gamma[j];
       vector_PRECISION_saxpy( p->x, p->x, p->V[j], alpha, p->v_start, p->v_end, l );
       vector_PRECISION_saxpy( p->r, p->r, p->Z[j], -alpha, p->v_start, p->v_end, l );
       
-      alpha = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, no_threading ) / norm_r0;
+      alpha = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, NULL ) / norm_r0;
       if ( creal(alpha) < p->tol ) {
         finish = 1;
         break;
@@ -1077,9 +988,9 @@ void fgcr_PRECISION( gmres_PRECISION_struct *p, level_struct *l ) {
   
   if ( p->timing || p->print ) t1 = MPI_Wtime();
   if ( p->print ) {
-    apply_operator_PRECISION( p->w, p->x, p, l, no_threading );
+    apply_operator_PRECISION( p->w, p->x, p, l, NULL );
     vector_PRECISION_minus( p->r, p->b, p->w, p->v_start, p->v_end, l );
-    beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, no_threading );
+    beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, NULL );
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)
     printf0("+----------------------------------------------------------+\n");
     printf0("\n");

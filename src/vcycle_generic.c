@@ -27,9 +27,7 @@ void smoother_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRE
   
   ASSERT( phi != eta );
 
-  START_MASTER(threading);
   PROF_PRECISION_START( _SM );
-  END_MASTER(threading);
   
   if ( g.method == 1 ) {
     additive_schwarz_PRECISION( phi, Dphi, eta, n, res, &(l->s_PRECISION), l, threading );
@@ -40,11 +38,9 @@ void smoother_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRE
   } else {
     int start = 0;
     int end   = l->num_inner_lattice_sites * l->num_lattice_site_var;
-    START_LOCKED_MASTER(threading)
     l->sp_PRECISION.shift = shift;
     l->sp_PRECISION.initial_guess_zero = res;
     l->sp_PRECISION.num_restart = n;
-    END_LOCKED_MASTER(threading)
     if ( g.method == 4 || g.method == 6 ) {
       if ( g.odd_even ) {
         if ( res == _RES ) {
@@ -52,9 +48,7 @@ void smoother_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRE
           vector_PRECISION_minus( l->sp_PRECISION.x, eta, l->sp_PRECISION.x, start, end, l );
         }
         block_to_oddeven_PRECISION( l->sp_PRECISION.b, res==_RES?l->sp_PRECISION.x:eta, l, threading );
-        START_LOCKED_MASTER(threading)
         l->sp_PRECISION.initial_guess_zero = _NO_RES;
-        END_LOCKED_MASTER(threading)
         if ( g.method == 6 ) {
           if ( l->depth == 0 ) g5D_solve_oddeven_PRECISION( &(l->sp_PRECISION), &(l->oe_op_PRECISION), l, threading );
           else g5D_coarse_solve_odd_even_PRECISION( &(l->sp_PRECISION), &(l->oe_op_PRECISION), l, threading );
@@ -69,9 +63,7 @@ void smoother_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRE
           vector_PRECISION_plus( phi, phi, l->sp_PRECISION.b, start, end, l );
         }
       } else {
-        START_LOCKED_MASTER(threading)
         l->sp_PRECISION.x = phi; l->sp_PRECISION.b = eta;
-        END_LOCKED_MASTER(threading)
         fgmres_PRECISION( &(l->sp_PRECISION), l, threading );
       }
     } else if ( g.method == 5 ) {
@@ -82,9 +74,7 @@ void smoother_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRE
     ASSERT( Dphi == NULL );
   }
   
-  START_MASTER(threading);
   PROF_PRECISION_STOP( _SM, n );
-  END_MASTER(threading);
 }
 
 
@@ -103,10 +93,8 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
         restrict_PRECISION( l->next_level->p_PRECISION.b, l->vbuf_PRECISION[3], l, threading );
       }
       if ( !l->next_level->idle ) {
-        START_MASTER(threading)
         if ( l->depth == 0 )
           g.coarse_time -= MPI_Wtime();
-        END_MASTER(threading)
         if ( l->level > 1 ) {
           if ( g.kcycle )
             fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
@@ -123,10 +111,8 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
             fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
           }
         }
-        START_MASTER(threading)
         if ( l->depth == 0 )
           g.coarse_time += MPI_Wtime();
-        END_MASTER(threading)
       }
       if( i == 0 && res == _NO_RES )
         interpolate3_PRECISION( phi, l->next_level->p_PRECISION.x, l, threading );

@@ -366,7 +366,6 @@
   extern global_struct g;
   
   static inline void printf0( char* format, ... ) {
-    START_MASTER(no_threading)
     if ( g.my_rank == 0 && g.print >= 0 ) {
       va_list argpt;
       va_start(argpt,format);
@@ -378,7 +377,6 @@
       va_end(argpt);
       fflush(0);
     }
-    END_MASTER(no_threading)
   }
   
   static inline void warning0( char* format, ... ) {

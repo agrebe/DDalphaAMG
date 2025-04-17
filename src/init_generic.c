@@ -197,33 +197,3 @@ void level_PRECISION_init( level_struct *l ) {
   fgmres_PRECISION_struct_init( &(l->p_PRECISION) );
   fgmres_PRECISION_struct_init( &(l->sp_PRECISION) );
 }
-
-
-void vcycle_timing_PRECISION( int n, level_struct *l, struct Thread *threading ) {
-
-  ASSERT( g.mixed_precision );
-  vector_PRECISION v1 = NULL, v2 = NULL;
-  double t0=0, t1=0;
-  PUBLIC_MALLOC( v1, complex_PRECISION, l->inner_vector_size );
-  PUBLIC_MALLOC( v2, complex_PRECISION, l->inner_vector_size );
-
-  START_LOCKED_MASTER(threading)
-  vector_PRECISION_define_random( v2, 0, l->inner_vector_size, l );
-  END_LOCKED_MASTER(threading)
-
-  START_MASTER(threading)
-  t0 = MPI_Wtime();
-  END_MASTER(threading)
-  for ( int i=0; i<n; i++ ) {
-    vcycle_PRECISION( v1, NULL, v2, _NO_RES, l, threading );
-  }
-  START_MASTER(threading)
-  t1 = MPI_Wtime();
-  printf0("100 v-cycles: %le seconds\n", t1-t0 );
-  END_MASTER(threading)
-
-  START_LOCKED_MASTER(threading)
-  PUBLIC_FREE( v1, complex_PRECISION, l->inner_vector_size );
-  PUBLIC_FREE( v2, complex_PRECISION, l->inner_vector_size );
-  END_LOCKED_MASTER(threading)
-}

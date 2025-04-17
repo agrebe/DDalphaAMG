@@ -46,7 +46,6 @@ complex_PRECISION process_inner_product_PRECISION( vector_PRECISION phi, vector_
   PROF_PRECISION_START( _PIP, threading );
   complex_PRECISION local_alpha = 0;
   
-  SYNC_CORES(threading)
   
   for (int i = start; i < end; i ++)
     local_alpha += conj_PRECISION(phi[i])*psi[i];
@@ -65,7 +64,6 @@ void process_multi_inner_product_PRECISION( int count, complex_PRECISION *result
   for(int c=0; c<count; c++)
     results[c] = 0.0;
 
-  SYNC_CORES(threading)
   if ( l->depth == 0 ) {
     for(int c=0; c<count; c++)
       for ( i=start; i<end; )
@@ -209,13 +207,10 @@ void vector_PRECISION_projection( vector_PRECISION z, vector_PRECISION v, int k,
   }
   process_multi_inner_product_PRECISION( k, ip, W_tmp, v, 0, l->inner_vector_size, l, threading );
   
-  START_MASTER(threading)
   for ( j=0; j<k; j++ ) {
     ip_buffer[j] = ip[j];
   }
   MPI_Allreduce( ip_buffer, ip_buffer+k, k, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
-  END_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)  
   
   vector_PRECISION_multi_saxpy( v_tmp, W_tmp, ip_buffer+k, 1, k, 0, l->inner_vector_size, l );
    
@@ -232,8 +227,6 @@ void vector_PRECISION_projection( vector_PRECISION z, vector_PRECISION v, int k,
 void gram_schmidt_on_aggregates_PRECISION( vector_PRECISION *V, const int num_vect, level_struct *l, struct Thread *threading ) {
   
   PROF_PRECISION_START( _GRAM_SCHMIDT_ON_AGGREGATES, threading );
-  SYNC_CORES(threading)
-  SYNC_HYPERTHREADS(threading)
   int i, j, k, k1, k2, num_aggregates = l->s_PRECISION.num_aggregates,
       aggregate_size = l->inner_vector_size / num_aggregates, offset = l->num_lattice_site_var/2;
       
@@ -280,8 +273,6 @@ void gram_schmidt_on_aggregates_PRECISION( vector_PRECISION *V, const int num_ve
       }
     }
   }
-  SYNC_HYPERTHREADS(threading)
-  SYNC_CORES(threading)
   PROF_PRECISION_STOP( _GRAM_SCHMIDT_ON_AGGREGATES, 1, threading );
 }
 
@@ -312,10 +303,7 @@ void set_boundary_PRECISION( vector_PRECISION phi, complex_PRECISION alpha, leve
 void gram_schmidt_PRECISION( vector_PRECISION *V, complex_PRECISION *buffer, const int begin, const int n, level_struct *l, struct Thread *threading ) {
   
   // NOTE: only thread safe, if "buffer" is the same buffer for all threads belonging to a common MPI process
-  START_MASTER(threading)
   PROF_PRECISION_START( _LA );
-  END_MASTER(threading)
-  SYNC_CORES(threading)
   
   PRECISION beta;
   int i, j, start = 0, end = l->inner_vector_size;
@@ -324,40 +312,26 @@ void gram_schmidt_PRECISION( vector_PRECISION *V, complex_PRECISION *buffer, con
     
     complex_PRECISION tmp[i];
     process_multi_inner_product_PRECISION( i, tmp, V, V[i], 0, l->inner_vector_size, l, threading );
-    SYNC_CORES(threading)
-    START_MASTER(threading)
     for ( j=0; j<i; j++ ) {
       buffer[j] = tmp[j];
     }
-    END_MASTER(threading)
-    SYNC_MASTER_TO_ALL(threading)
     
     if ( i>0 ) {
-      START_MASTER(threading)
       PROF_PRECISION_START( _ALLR );
       MPI_Allreduce( buffer, buffer+n, i, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
       PROF_PRECISION_STOP( _ALLR, 1 );
-      END_MASTER(threading)
-      SYNC_MASTER_TO_ALL(threading)
     }
     
     for( j=0; j<i; j++ ) {
       vector_PRECISION_saxpy( V[i], V[i], V[j], -(buffer+n)[j], start, end, l );
-      SYNC_CORES(threading)
     }
     
-    SYNC_CORES(threading)
       
     beta = global_norm_PRECISION( V[i], 0, l->inner_vector_size, l, threading );
-    SYNC_MASTER_TO_ALL(threading)
     vector_PRECISION_real_scale( V[i], V[i], creal(1.0/beta), start, end, l );
-    SYNC_CORES(threading)
   }
   
-  START_MASTER(threading)
   PROF_PRECISION_STOP( _LA, 1 );
-  END_MASTER(threading)
-  SYNC_CORES(threading)
 }
 
 
@@ -371,7 +345,6 @@ void setup_gram_schmidt_PRECISION_compute_dots(
   for(int i=0; i<2*offset; i++)
     thread_buffer[i] = 0.0;
 
-  SYNC_CORES(threading)
   
   for ( int i=start; i<end; i+=cache_block_size) {
     coarse_gamma5_PRECISION( tmp, V[count]+i, 0, cache_block_size, l );
@@ -435,13 +408,11 @@ void setup_gram_schmidt_PRECISION( vector_PRECISION *V, vector_PRECISION g5v,
       setup_gram_schmidt_PRECISION_compute_dots( thread_buffer, V, i, n, start, end, l, threading);
     
     
-    START_LOCKED_MASTER(threading)
     if ( i>0 ) {
       PROF_PRECISION_START( _ALLR );
       MPI_Allreduce( thread_buffer, thread_buffer+2*n, 2*n, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
       PROF_PRECISION_STOP( _ALLR, 1 );
     }
-    END_LOCKED_MASTER(threading)
 
     
     if ( l->depth > 0 ) {

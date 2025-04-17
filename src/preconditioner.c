@@ -38,10 +38,8 @@ void preconditioner( vector_double phi, vector_double Dphi, vector_double eta,
     }
   } else {
     if ( g.mixed_precision ) {
-      START_LOCKED_MASTER(threading)
       l->sp_float.num_restart = l->n_cy;
       l->sp_float.initial_guess_zero = res;
-      END_LOCKED_MASTER(threading)
       serial_to_oddeven_float( l->sp_float.b, eta, l, threading );
       if ( g.method == 6 ) {
         g5D_solve_oddeven_float( &(l->sp_float), &(l->oe_op_float), l, threading );
@@ -50,10 +48,8 @@ void preconditioner( vector_double phi, vector_double Dphi, vector_double eta,
       }
       oddeven_to_serial_float( phi, l->sp_float.x, l, threading );
     } else {
-      START_LOCKED_MASTER(threading)
       l->sp_double.num_restart = l->n_cy;
       l->sp_double.initial_guess_zero = res;
-      END_LOCKED_MASTER(threading)
       serial_to_oddeven_double( l->sp_double.b, eta, l, threading );
       if ( g.method == 6 ) {
         g5D_solve_oddeven_double( &(l->sp_double), &(l->oe_op_double), l, threading );

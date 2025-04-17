@@ -33,6 +33,4 @@ struct Thread;
   void next_level_PRECISION_free( level_struct *l );
   void level_PRECISION_init( level_struct *l );
   
-  void vcycle_timing_PRECISION( int n, level_struct *l, struct Thread *threading );
-
 #endif

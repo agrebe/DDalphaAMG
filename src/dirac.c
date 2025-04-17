@@ -651,7 +651,6 @@ void shift_update( complex_double shift, level_struct *l, struct Thread *threadi
   shift_update_double( &(l->s_double.op), shift, l, threading );
   shift_update_float( &(l->s_float.op), shift, l, threading );
 
-  START_LOCKED_MASTER(threading)
   if ( g.mixed_precision )
     operator_updates_float( l ); 
   else
@@ -659,7 +658,6 @@ void shift_update( complex_double shift, level_struct *l, struct Thread *threadi
 
   g.g5D_shift = shift;
   l->dirac_shift = shift;
-  END_LOCKED_MASTER(threading)
 
 #ifdef DEBUG
   test_routine( l, threading );
@@ -675,14 +673,12 @@ void g5D_shift_update( complex_double shift, level_struct *l, struct Thread *thr
   g5D_shift_update_double( &(l->s_double.op), shift, l, threading );
   g5D_shift_update_float( &(l->s_float.op), shift, l, threading );
   
-  START_LOCKED_MASTER(threading)
   if ( g.mixed_precision )
     operator_updates_float( l ); 
   else
     operator_updates_double( l );
 
   g.g5D_shift = shift;
-  END_LOCKED_MASTER(threading)
 
 #ifdef DEBUG
   test_routine( l, threading );

@@ -34,7 +34,6 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
   if ( l->level > 0 ) {
     int mu;
 
-    START_LOCKED_MASTER(threading)
 
     // allocate storage for next level parameters and initialize them
     MALLOC( l->next_level, level_struct, 1 );
@@ -74,32 +73,22 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
     data_layout_init( l->next_level );
     neighbor_define( l->next_level );
 
-    END_LOCKED_MASTER(threading)
-    SYNC_MASTER_TO_ALL(threading)
     
     if ( g.mixed_precision ) {
-      START_LOCKED_MASTER(threading)
       if ( l->depth == 0 ) fine_level_float_alloc( l );
       level_float_init( l->next_level );
       next_level_float_setup( l );
-      END_LOCKED_MASTER(threading)
       if ( l->depth == 0 ) {
-        START_LOCKED_MASTER(threading)
         interpolation_float_alloc( l );
-        END_LOCKED_MASTER(threading)
         interpolation_float_define( V, l, threading );
         coarse_grid_correction_float_setup( l, threading );
       }
     } else {
-      START_LOCKED_MASTER(threading)
       if ( l->depth == 0 ) fine_level_double_alloc( l );
       level_double_init( l->next_level );
       next_level_double_setup( l );
-      END_LOCKED_MASTER(threading)
       if ( l->depth == 0 ) {
-        START_LOCKED_MASTER(threading)
         interpolation_double_alloc( l );
-        END_LOCKED_MASTER(threading)
         interpolation_double_define( V, l, threading );
         coarse_grid_correction_double_setup( l, threading );
       }
@@ -129,7 +118,6 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
   
   double t0=0, t1=0;
   
-  START_LOCKED_MASTER(threading)
   if ( g.vt.evaluation ) {
     l->dirac_shift = l->real_shift;
     l->level = g.num_levels-1;
@@ -174,11 +162,8 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
                                 _GLOBAL_FGMRES, _NOTHING, NULL, d_plus_clover_double, &(g.p), l );
     fine_level_double_alloc( l );
   }
-  END_LOCKED_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
   
   if ( g.method >= 0 ) {
-    START_LOCKED_MASTER(threading)
     t0 = MPI_Wtime();
     if ( g.mixed_precision ) {
       smoother_float_def( l );
@@ -189,18 +174,13 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
       if ( g.method >= 4 && g.odd_even )
         oddeven_setup_double( &(g.op_double), l );
     }
-    END_LOCKED_MASTER(threading)
-    SYNC_MASTER_TO_ALL(threading)
     if ( g.method > 0 )
       if ( g.interpolation && g.num_levels > 1 )
         next_level_setup( V, l, threading );
-    START_LOCKED_MASTER(threading)
     t1 = MPI_Wtime();
     g.total_time = t1-t0;
     printf0("elapsed time: %lf seconds\n", t1-t0 );
-    END_LOCKED_MASTER(threading)
   }
-  START_LOCKED_MASTER(threading)
 #ifdef PARAMOUTPUT  
   if ( g.method >= -1 && g.print > 0 && !( g.vt.evaluation && g.vt.re_setup ) ) {
     printf0("\n+----------------------------------------------------------+\n");
@@ -257,19 +237,16 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
     printf0("\n");
   }
 #endif
-  END_LOCKED_MASTER(threading)
 
   
   
 #ifdef DEBUG
   test_routine( l, threading );
 #endif
-  START_LOCKED_MASTER(threading)
   g.mg_setup_status.gauge_updates_since_last_setup = 0;
   g.mg_setup_status.gauge_updates_since_last_setup_update = 0;
     if ( l->depth==0 )
       prof_print( l );
-  END_LOCKED_MASTER(threading)
 }
 
 
@@ -306,10 +283,7 @@ void method_free( level_struct *l ) {
 
 
 void method_re_setup( level_struct *l, struct Thread *threading ) {
-  START_LOCKED_MASTER(threading)
   method_free( l );
-  END_LOCKED_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
   method_setup( NULL, l, threading );
 }
 
@@ -320,15 +294,11 @@ void method_update( int setup_iter, level_struct *l, struct Thread *threading ) 
     
     double t0=0, t1=0, shift = creal(l->dirac_shift);
     
-    START_LOCKED_MASTER(threading)
     g.in_setup = 1;
       if ( l->depth==0 )
         prof_init( l );
-    END_LOCKED_MASTER(threading)
 
-    START_MASTER(threading)
     t0 = MPI_Wtime();
-    END_MASTER(threading)
     
     if ( g.setup_m0 != shift )
       shift_update( (complex_double)g.setup_m0, l, threading );
@@ -341,23 +311,19 @@ void method_update( int setup_iter, level_struct *l, struct Thread *threading ) 
     if ( g.setup_m0 != shift )
       shift_update( (complex_double)shift, l, threading );
     
-    START_MASTER(threading)
     t1 = MPI_Wtime();
     g.total_time = t1-t0;
     printf0("\nperformed %d iterative setup steps\n", setup_iter );
     printf0("elapsed time: %lf seconds (%lf seconds on coarse grid)\n\n", t1-t0, g.coarse_time );
-    END_MASTER(threading)
     
 #ifdef DEBUG
     test_routine( l, threading );
 #endif
 
-    START_LOCKED_MASTER(threading)
     g.in_setup = 0;
     g.mg_setup_status.gauge_updates_since_last_setup_update = 0;
       if ( l->depth==0 )
         prof_print( l );
-    END_LOCKED_MASTER(threading)
     
     
   }

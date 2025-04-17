@@ -168,7 +168,6 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
   complex_double beta = 0;
 
   double norm_r0=1, gamma_jp1=1, t0=0, t1=0;
-  START_LOCKED_MASTER(threading)
 #ifndef WILSON_BENCHMARK
   if ( l->depth==0 && ( p->dp.timing || p->dp.print ) ) prof_init( l );
 #endif
@@ -178,8 +177,6 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)
   if ( p->dp.print && g.print > 0 ) printf0("+----------------------------------------------------------+\n");
 #endif
-  END_LOCKED_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
   
   // Outer loop in double precision
   for( ol=0; ol<p->dp.num_restart && finish==0; ol++ )  {
@@ -191,10 +188,7 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
       vector_double_minus( p->dp.r, p->dp.b, p->dp.r, start, end, l ); // compute r <- b - r
     }
     gamma0 = (complex_double) global_norm_double( p->dp.r, p->dp.v_start, p->dp.v_end, l, threading ); // gamma_0 = norm(r)
-    START_MASTER(threading)
     p->dp.gamma[0] = gamma0;
-    END_MASTER(threading)
-    SYNC_MASTER_TO_ALL(threading)
     
     if( ol == 0) {
       norm_r0 = creal(gamma0);
@@ -202,11 +196,9 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)
     else {
       if ( p->dp.print && g.print > 0 ) {
-        START_MASTER(threading)
         printf0("+----------------------------------------------------------+\n");
         printf0("| restarting ...          true residual norm: %6e |\n", creal(gamma0)/norm_r0 );
         printf0("+----------------------------------------------------------+\n");
-        END_MASTER(threading)
       }
     }
 #endif
@@ -226,17 +218,13 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
         
         if ( iter%10 == 0 || p->sp.preconditioner != NULL || l->depth > 0 ) {
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)
-          START_MASTER(threading)
           if ( p->sp.print && g.print > 0 )
             printf0("| approx. rel. res. after  %-6d iterations: %e |\n", iter, gamma_jp1/norm_r0 );
-          END_MASTER(threading)
 #endif
         }
         if( gamma_jp1/norm_r0 < p->dp.tol || gamma_jp1/norm_r0 > 1E+5 ) { // if satisfied ... stop
           finish = 1;
-          START_MASTER(threading)
             if ( gamma_jp1/norm_r0 > 1E+5 ) printf0("Divergence of fgmres_MP, iter = %d, level=%d\n", iter, l->level );
-          END_MASTER(threading)
         }
         if( gamma_jp1/creal(gamma0) < p->sp.tol )
           break;
@@ -255,9 +243,7 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
     }
   } // end of fgmres
   
-  START_LOCKED_MASTER(threading)
   if ( l->depth == 0 ) { t1 = MPI_Wtime(); g.total_time = t1-t0; g.iter_count = iter; g.norm_res = gamma_jp1/norm_r0; }
-  END_LOCKED_MASTER(threading)
   
   if ( p->dp.print ) {
 #ifdef FGMRES_RESTEST
@@ -267,7 +253,6 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
 #else
     beta = gamma_jp1;
 #endif
-    START_MASTER(threading)
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)
     if ( g.print > 0 ) printf0("+----------------------------------------------------------+\n\n");
 #endif
@@ -281,28 +266,23 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
               g.coarse_time, 100*(g.coarse_time/(t1-t0)) );
     printf0("|    max used mem/MPIproc: %-8.2le GB                     |\n", g.max_storage/1024.0 );
     printf0("+----------------------------------------------------------+\n");
-    END_MASTER(threading)
   }
 
   if ( l->depth == 0 && g.vt.p_end != NULL  ) {
     if ( g.vt.p_end != NULL ) {
-      START_LOCKED_MASTER(threading)
       printf0("solve iter: %d\n", iter );
       printf0("solve time: %le seconds\n", t1-t0 );
       g.vt.p_end->values[_SLV_TIME] += (t1-t0)/((double)g.vt.average_over);
       g.vt.p_end->values[_SLV_ITER] += iter/((double)g.vt.average_over);
       g.vt.p_end->values[_CRS_ITER] += (((double)g.coarse_iter_count)/((double)iter))/((double)g.vt.average_over);
       g.vt.p_end->values[_CRS_TIME] += g.coarse_time/((double)g.vt.average_over);
-    END_LOCKED_MASTER(threading)
     }
   }
 
   if ( l->depth == 0 && ( p->dp.timing || p->dp.print ) && !(g.vt.p_end != NULL )  ) {
-    START_MASTER(threading)
 #ifndef WILSON_BENCHMARK
     prof_print( l );
 #endif
-    END_MASTER(threading)
   }
   
   return iter;
@@ -314,8 +294,6 @@ void arnoldi_step_MP( vector_float *V, vector_float *Z, vector_float w,
                       complex_float shift, gmres_float_struct *p, level_struct *l,
                       struct Thread *threading ) {
   
-  SYNC_MASTER_TO_ALL(threading)
-  SYNC_CORES(threading)
   int i;
   // start and end indices for vector functions depending on thread
   int start = p->v_start;
@@ -343,7 +321,6 @@ void arnoldi_step_MP( vector_float *V, vector_float *Z, vector_float w,
 
   complex_double tmp[j+1];
   process_multi_inner_product_MP( j+1, tmp, V, w, p->v_start, p->v_end, l, threading );
-  START_MASTER(threading)
   for( i=0; i<=j; i++ )
     buffer[i] = tmp[i];
   
@@ -355,8 +332,6 @@ void arnoldi_step_MP( vector_float *V, vector_float *Z, vector_float w,
     for( i=0; i<=j; i++ )
       H[j][i] = buffer[i];
   }
-  END_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
 
   // orthogonalization
   complex_float alpha[j+1];
@@ -365,10 +340,7 @@ void arnoldi_step_MP( vector_float *V, vector_float *Z, vector_float w,
   vector_float_multi_saxpy( w, V, alpha, 1, j+1, start, end, l );
   
   complex_double tmp2 = global_norm_MP( w, p->v_start, p->v_end, l, threading );
-  START_MASTER(threading)
   H[j][j+1] = tmp2;
-  END_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
   
   // V_j+1 = w / H_j+1,j
   if ( cabs_double( H[j][j+1] ) > 1e-15 )
@@ -385,7 +357,6 @@ void compute_solution_MP( vector_float x, vector_float *V, complex_double *y,
   int start = p->v_start;
   int end = p->v_end;
 
-  START_MASTER(threading)
   
   PROF_double_START( _SMALL2 );
   
@@ -400,8 +371,6 @@ void compute_solution_MP( vector_float x, vector_float *V, complex_double *y,
   
   PROF_double_STOP( _SMALL2, ((j+1)*(j+2))/2 + j+1 );
   
-  END_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
   
   // x = V*y
   vector_float_scale( x, V[0], (complex_float) y[0], start, end, l );
