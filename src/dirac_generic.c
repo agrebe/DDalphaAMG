@@ -22,7 +22,7 @@
 #include "main.h"
 
 void clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, config_PRECISION clover, int length,
-                       level_struct *l, struct Thread *threading ) {
+                       level_struct *l ) {
   
   vector_PRECISION eta_end = eta + length;
   if ( g.csw == 0.0 ) {
@@ -75,7 +75,7 @@ static void spin2and3_clover_PRECISION( vector_PRECISION eta, vector_PRECISION p
   }
 }
 
-void block_d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, int start, schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
+void block_d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, int start, schwarz_PRECISION_struct *s, level_struct *l ) {
 
   int i, n = s->num_block_sites, *length = s->dir_length, **index = s->index, *neighbor = s->op.neighbor_table;
   vector_PRECISION lphi = phi+start, leta = eta+start;
@@ -87,7 +87,7 @@ void block_d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, 
   
   // clover term
   if ( g.csw == 0.0 ) {
-    clover_PRECISION( leta, lphi, clover, 12*n, l, threading ); 
+    clover_PRECISION( leta, lphi, clover, 12*n, l ); 
   } else {
     for ( i=0; i<n; i++ ) {
       site_clover_PRECISION( leta+12*i, lphi+12*i, clover+42*i );
@@ -146,7 +146,7 @@ void block_d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, 
 }
 
 
-void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
+void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l ) {
   
   int n = l->num_inner_lattice_sites, *neighbor = op->neighbor_table, start = 0, end = 12*n;
   int i, j, *nb_pt;
@@ -158,7 +158,7 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
   if ( g.csw == 0.0 ) {
     vector_PRECISION_scale( eta, phi, op->shift, start, end, l );
   } else {
-    clover_PRECISION( eta+start, phi+start, op->clover+((start/12)*42), end-start, l, threading );
+    clover_PRECISION( eta+start, phi+start, op->clover+((start/12)*42), end-start, l );
   }
   
   PROF_PRECISION_START( _NC ); 
@@ -253,14 +253,14 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
 }
 
 
-void d_plus_clover_dagger_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {  
-  gamma5_PRECISION( l->vbuf_PRECISION[6], phi, l, threading );
-  d_plus_clover_PRECISION( l->vbuf_PRECISION[7], l->vbuf_PRECISION[6], op, l, threading );
-  gamma5_PRECISION( eta, l->vbuf_PRECISION[7], l, threading );
+void d_plus_clover_dagger_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l ) {  
+  gamma5_PRECISION( l->vbuf_PRECISION[6], phi, l );
+  d_plus_clover_PRECISION( l->vbuf_PRECISION[7], l->vbuf_PRECISION[6], op, l );
+  gamma5_PRECISION( eta, l->vbuf_PRECISION[7], l );
 }
 
 
-void gamma5_PRECISION( vector_PRECISION eta, vector_PRECISION phi, level_struct *l, struct Thread *threading ) {
+void gamma5_PRECISION( vector_PRECISION eta, vector_PRECISION phi, level_struct *l ) {
   
   vector_PRECISION eta_end = eta + l->num_inner_lattice_sites * l->num_lattice_site_var;
   eta += 0;
@@ -272,9 +272,9 @@ void gamma5_PRECISION( vector_PRECISION eta, vector_PRECISION phi, level_struct 
 }
 
 
-void g5D_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
-  d_plus_clover_PRECISION( eta, phi, op, l, threading );
-  gamma5_PRECISION( eta, eta, l, threading );
+void g5D_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l ) {
+  d_plus_clover_PRECISION( eta, phi, op, l );
+  gamma5_PRECISION( eta, eta, l );
 }
 
 
@@ -470,7 +470,7 @@ void operator_updates_PRECISION( level_struct *l ) {
 }
 
 
-void shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION shift, level_struct *l, struct Thread *threading ) {
+void shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION shift, level_struct *l ) {
   
   config_PRECISION clover = op->clover;
   
@@ -514,7 +514,7 @@ void shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION sh
 }
 
 
-void g5D_shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION shift, level_struct *l, struct Thread *threading ) {
+void g5D_shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION shift, level_struct *l ) {
 
   config_PRECISION clover = op->clover;
   

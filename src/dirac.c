@@ -643,13 +643,13 @@ void scale_clover( operator_double_struct *op, double scale_even, double scale_o
 }
 
 
-void shift_update( complex_double shift, level_struct *l, struct Thread *threading ) {
+void shift_update( complex_double shift, level_struct *l ) {
 
   ASSERT(l->depth == 0);
-  shift_update_double( &(g.op_double), shift, l, threading );
-  shift_update_float( &(g.op_float), shift, l, threading );
-  shift_update_double( &(l->s_double.op), shift, l, threading );
-  shift_update_float( &(l->s_float.op), shift, l, threading );
+  shift_update_double( &(g.op_double), shift, l );
+  shift_update_float( &(g.op_float), shift, l );
+  shift_update_double( &(l->s_double.op), shift, l );
+  shift_update_float( &(l->s_float.op), shift, l );
 
   if ( g.mixed_precision )
     operator_updates_float( l ); 
@@ -660,18 +660,18 @@ void shift_update( complex_double shift, level_struct *l, struct Thread *threadi
   l->dirac_shift = shift;
 
 #ifdef DEBUG
-  test_routine( l, threading );
+  test_routine( l );
 #endif
 }
 
 
-void g5D_shift_update( complex_double shift, level_struct *l, struct Thread *threading ) {
+void g5D_shift_update( complex_double shift, level_struct *l ) {
   
   ASSERT(l->depth == 0);
-  g5D_shift_update_double( &(g.op_double), shift, l, threading );
-  g5D_shift_update_float( &(g.op_float), shift, l, threading );
-  g5D_shift_update_double( &(l->s_double.op), shift, l, threading );
-  g5D_shift_update_float( &(l->s_float.op), shift, l, threading );
+  g5D_shift_update_double( &(g.op_double), shift, l );
+  g5D_shift_update_float( &(g.op_float), shift, l );
+  g5D_shift_update_double( &(l->s_double.op), shift, l );
+  g5D_shift_update_float( &(l->s_float.op), shift, l );
   
   if ( g.mixed_precision )
     operator_updates_float( l ); 
@@ -681,7 +681,7 @@ void g5D_shift_update( complex_double shift, level_struct *l, struct Thread *thr
   g.g5D_shift = shift;
 
 #ifdef DEBUG
-  test_routine( l, threading );
+  test_routine( l );
 #endif
 
 }

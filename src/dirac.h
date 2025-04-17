@@ -49,7 +49,7 @@ struct Thread;
   
   void define_odd_even_table( level_struct *l );
   void scale_clover( operator_double_struct *op, double scale_even, double scale_odd, level_struct *l );
-  void shift_update( complex_double shift, level_struct *l, struct Thread *threading );
-  void g5D_shift_update( complex_double shift, level_struct *l, struct Thread *threading );
+  void shift_update( complex_double shift, level_struct *l);
+  void g5D_shift_update( complex_double shift, level_struct *l);
 
 #endif

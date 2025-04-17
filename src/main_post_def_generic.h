@@ -27,17 +27,17 @@
   #include "coarse_operator_PRECISION.h"
 
 
-  static inline void apply_operator_PRECISION( vector_PRECISION output, vector_PRECISION input, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {
-    p->eval_operator( output, input, p->op, l, threading );
+  static inline void apply_operator_PRECISION( vector_PRECISION output, vector_PRECISION input, gmres_PRECISION_struct *p, level_struct *l ) {
+    p->eval_operator( output, input, p->op, l );
     if ( p->shift ) {
       int start = p->v_start, end = p->v_end;
       vector_PRECISION_saxpy( output, output, input, -p->shift, start, end, l );
     }
   }
   
-  static inline void apply_operator_dagger_PRECISION( vector_PRECISION output, vector_PRECISION input, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {
-    if ( l->depth > 0 ) apply_coarse_operator_dagger_PRECISION( output, input, &(l->s_PRECISION.op), l, threading );
-    else d_plus_clover_dagger_PRECISION( output, input, p->op, l, threading );
+  static inline void apply_operator_dagger_PRECISION( vector_PRECISION output, vector_PRECISION input, gmres_PRECISION_struct *p, level_struct *l ) {
+    if ( l->depth > 0 ) apply_coarse_operator_dagger_PRECISION( output, input, &(l->s_PRECISION.op), l );
+    else d_plus_clover_dagger_PRECISION( output, input, p->op, l );
   }
   
 #endif

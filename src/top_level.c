@@ -21,7 +21,7 @@
 
 #include "main.h"
 
-void rhs_define( vector_double rhs, level_struct *l, struct Thread *threading ) {
+void rhs_define( vector_double rhs, level_struct *l ) {
 
   int start = 0;
   int end = l->num_inner_lattice_sites * l->num_lattice_site_var;
@@ -47,7 +47,7 @@ void rhs_define( vector_double rhs, level_struct *l, struct Thread *threading ) 
 }
 
 
-int wilson_driver( vector_double solution, vector_double source, level_struct *l, struct Thread *threading ) {
+int wilson_driver( vector_double solution, vector_double source, level_struct *l ) {
   
   int iter = 0, start = 0, end = l->num_inner_lattice_sites * l->num_lattice_site_var;
   
@@ -64,11 +64,11 @@ int wilson_driver( vector_double solution, vector_double source, level_struct *l
   
   vector_double_copy( rhs, source, start, end, l );  
   if ( g.method == -1 ) {
-    cgn_double( &(g.p), l, threading );
+    cgn_double( &(g.p), l );
   } else if ( g.mixed_precision == 2 ) {
-    iter = fgmres_MP( &(g.p_MP), l, threading );
+    iter = fgmres_MP( &(g.p_MP), l );
   } else {
-    iter = fgmres_double( &(g.p), l, threading );
+    iter = fgmres_double( &(g.p), l );
   }
   vector_double_copy( solution, sol, start, end, l );
 #ifdef WILSON_BENCHMARK
@@ -86,7 +86,7 @@ int wilson_driver( vector_double solution, vector_double source, level_struct *l
 }
 
 
-void solve( vector_double solution, vector_double source, level_struct *l, struct Thread *threading ) {
+void solve( vector_double solution, vector_double source, level_struct *l ) {
   
   vector_double rhs = g.mixed_precision==2?g.p_MP.dp.b:g.p.b;
 
@@ -95,12 +95,12 @@ void solve( vector_double solution, vector_double source, level_struct *l, struc
     vector_double_define_random( rhs, 0, l->inner_vector_size, l );
     scan_var( &(g.vt), l );
   } else {
-    wilson_driver( solution, source, l, threading );
+    wilson_driver( solution, source, l );
   }
 }
 
 
-void solve_driver( level_struct *l, struct Thread *threading ) {
+void solve_driver( level_struct *l ) {
   
   vector_double solution = NULL, source = NULL;
   
@@ -115,13 +115,13 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
   for (int t = 0; t < Lt; t ++) pion_correlator[t] = 0;
 
   for (int j = 0; j < 12; j ++) {
-    rhs_define( source, l, threading );
+    rhs_define( source, l );
     if ( g.my_rank == 0 ) {
       source[0] = 0;
       source[j] = 1.0;
     }
 
-    solve( solution, source, l, threading );
+    solve( solution, source, l );
 
     // compute pion correlator
     // do this on one thread

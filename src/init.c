@@ -29,7 +29,7 @@ complex_float  _COMPLEX_float_MINUS_ONE = (complex_float)(-1.0);
 complex_float  _COMPLEX_float_ZERO = (complex_float)0.0;
 
 
-void next_level_setup( vector_double *V, level_struct *l, struct Thread *threading ) {
+void next_level_setup( vector_double *V, level_struct *l ) {
   
   if ( l->level > 0 ) {
     int mu;
@@ -80,8 +80,8 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
       next_level_float_setup( l );
       if ( l->depth == 0 ) {
         interpolation_float_alloc( l );
-        interpolation_float_define( V, l, threading );
-        coarse_grid_correction_float_setup( l, threading );
+        interpolation_float_define( V, l );
+        coarse_grid_correction_float_setup( l );
       }
     } else {
       if ( l->depth == 0 ) fine_level_double_alloc( l );
@@ -89,8 +89,8 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
       next_level_double_setup( l );
       if ( l->depth == 0 ) {
         interpolation_double_alloc( l );
-        interpolation_double_define( V, l, threading );
-        coarse_grid_correction_double_setup( l, threading );
+        interpolation_double_define( V, l );
+        coarse_grid_correction_double_setup( l );
       }
     }
   }
@@ -114,7 +114,7 @@ void next_level_free( level_struct *l ) {
 }
 
 
-void method_setup( vector_double *V, level_struct *l, struct Thread *threading ) {
+void method_setup( vector_double *V, level_struct *l ) {
   
   double t0=0, t1=0;
   
@@ -176,7 +176,7 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
     }
     if ( g.method > 0 )
       if ( g.interpolation && g.num_levels > 1 )
-        next_level_setup( V, l, threading );
+        next_level_setup( V, l );
     t1 = MPI_Wtime();
     g.total_time = t1-t0;
     printf0("elapsed time: %lf seconds\n", t1-t0 );
@@ -241,7 +241,7 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
   
   
 #ifdef DEBUG
-  test_routine( l, threading );
+  test_routine( l );
 #endif
   g.mg_setup_status.gauge_updates_since_last_setup = 0;
   g.mg_setup_status.gauge_updates_since_last_setup_update = 0;
@@ -282,13 +282,13 @@ void method_free( level_struct *l ) {
 }
 
 
-void method_re_setup( level_struct *l, struct Thread *threading ) {
+void method_re_setup( level_struct *l ) {
   method_free( l );
-  method_setup( NULL, l, threading );
+  method_setup( NULL, l );
 }
 
 
-void method_update( int setup_iter, level_struct *l, struct Thread *threading ) {
+void method_update( int setup_iter, level_struct *l ) {
   
   if ( g.method > 0 && g.interpolation && g.num_levels > 1 && setup_iter > 0 ) {
     
@@ -301,15 +301,15 @@ void method_update( int setup_iter, level_struct *l, struct Thread *threading ) 
     t0 = MPI_Wtime();
     
     if ( g.setup_m0 != shift )
-      shift_update( (complex_double)g.setup_m0, l, threading );
+      shift_update( (complex_double)g.setup_m0, l );
     
     if ( g.mixed_precision )
-      iterative_float_setup( setup_iter, l, threading );
+      iterative_float_setup( setup_iter, l );
     else
-      iterative_double_setup( setup_iter, l, threading );
+      iterative_double_setup( setup_iter, l );
         
     if ( g.setup_m0 != shift )
-      shift_update( (complex_double)shift, l, threading );
+      shift_update( (complex_double)shift, l );
     
     t1 = MPI_Wtime();
     g.total_time = t1-t0;
@@ -317,7 +317,7 @@ void method_update( int setup_iter, level_struct *l, struct Thread *threading ) 
     printf0("elapsed time: %lf seconds (%lf seconds on coarse grid)\n\n", t1-t0, g.coarse_time );
     
 #ifdef DEBUG
-    test_routine( l, threading );
+    test_routine( l );
 #endif
 
     g.in_setup = 0;

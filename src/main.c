@@ -76,12 +76,12 @@ int main( int argc, char **argv ) {
   }
 
   // setup up initial MG hierarchy
-  method_setup( NULL, &l, NULL );
+  method_setup( NULL, &l );
   
   // iterative phase
-  method_update( l.setup_iter, &l, NULL );
+  method_update( l.setup_iter, &l );
   
-  solve_driver( &l, NULL );
+  solve_driver( &l );
   
   method_free( &l );
   method_finalize( &l );

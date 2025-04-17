@@ -67,16 +67,14 @@
   } while(0)
 #endif
 
-  struct Thread;
-
-  complex_PRECISION global_inner_product_PRECISION( vector_PRECISION x, vector_PRECISION y, int start, int end, level_struct *l, struct Thread *threading );
-  complex_PRECISION process_inner_product_PRECISION( vector_PRECISION phi, vector_PRECISION psi, int start, int end, level_struct *l, struct Thread *threading );
+  complex_PRECISION global_inner_product_PRECISION( vector_PRECISION x, vector_PRECISION y, int start, int end, level_struct *l );
+  complex_PRECISION process_inner_product_PRECISION( vector_PRECISION phi, vector_PRECISION psi, int start, int end, level_struct *l );
 
   void process_multi_inner_product_PRECISION( int count, complex_PRECISION *results, vector_PRECISION *phi, vector_PRECISION psi,
-      int start, int end, level_struct *l, struct Thread *threading );
+      int start, int end, level_struct *l );
 
-  PRECISION global_norm_PRECISION( vector_PRECISION phi, int start, int end, level_struct *l, struct Thread *threading );
-  PRECISION process_norm_PRECISION( vector_PRECISION x, int start, int end, level_struct *l, struct Thread *threading );
+  PRECISION global_norm_PRECISION( vector_PRECISION phi, int start, int end, level_struct *l );
+  PRECISION process_norm_PRECISION( vector_PRECISION x, int start, int end, level_struct *l );
   
   complex_PRECISION local_xy_over_xx_PRECISION( vector_PRECISION phi, vector_PRECISION psi, int start, int end, level_struct *l  );
   void vector_PRECISION_plus( vector_PRECISION z, vector_PRECISION x, vector_PRECISION y, int start, int end, level_struct *l ); // z := x + y
@@ -87,29 +85,26 @@
   void vector_PRECISION_saxpy( vector_PRECISION z, vector_PRECISION x, vector_PRECISION y, complex_PRECISION alpha, int start, int end, level_struct *l ); // z := x + alpha*y
   void vector_PRECISION_copy( vector_PRECISION z, vector_PRECISION x, int start, int end, level_struct *l ); // z := x
   void vector_PRECISION_projection( vector_PRECISION z, vector_PRECISION v, int k, vector_PRECISION *W, complex_PRECISION *diag, 
-                                  int orthogonal, level_struct *l, Thread *threading );
+                                  int orthogonal, level_struct *l );
   
-  void gram_schmidt_on_aggregates_PRECISION( vector_PRECISION *V, const int num_vec, level_struct *l, struct Thread *threading );
+  void gram_schmidt_on_aggregates_PRECISION( vector_PRECISION *V, const int num_vec, level_struct *l );
   
   // Gram-Schmidt on a block of vectors, used by Block-Gram-Schmidt
   void aggregate_gram_schmidt_block_PRECISION( PRECISION *V,
-      int num_vec, int leading_dimension, level_struct *l, struct Thread *threading );
+      int num_vec, int leading_dimension, level_struct *l );
   // used by Block-Gram-Schmidt
   void aggregate_orthogonalize_block_wrt_orthonormal_block_PRECISION( PRECISION *B, PRECISION *U,
-      int num_vec, level_struct *l, struct Thread *threading );
+      int num_vec, level_struct *l );
   // used by Block-Gram-Schmidt
   void aggregate_block_dot_block_PRECISION( PRECISION *S, PRECISION *U, PRECISION *B,
-      int num_vec, int leading_dimension, level_struct *l, struct Thread *threading );
+      int num_vec, int leading_dimension, level_struct *l );
   // used by Block-Gram-Schmidt
   void aggregate_block_minus_block_times_dot_PRECISION( PRECISION *B, PRECISION *U, PRECISION *S,
-      int num_vec, int leading_dimension, level_struct *l, struct Thread *threading );
+      int num_vec, int leading_dimension, level_struct *l );
 
-  void gram_schmidt_PRECISION( vector_PRECISION *V, complex_PRECISION *buffer, const int start, const int n, level_struct *l, struct Thread *threading );
-  void setup_gram_schmidt_PRECISION( vector_PRECISION *V, vector_PRECISION g5v,
-                                     complex_PRECISION *buffer, const int n, level_struct *l,
-                                     struct Thread *threading );
+  void gram_schmidt_PRECISION( vector_PRECISION *V, complex_PRECISION *buffer, const int start, const int n, level_struct *l );
   void spinwise_PRECISION_skalarmultiply( vector_PRECISION eta1, vector_PRECISION eta2,
                                           vector_PRECISION phi, complex_PRECISION alpha, int start, int end, level_struct *l );
-  void set_boundary_PRECISION( vector_PRECISION phi, complex_PRECISION alpha, level_struct *l, struct Thread *threading );
+  void set_boundary_PRECISION( vector_PRECISION phi, complex_PRECISION alpha, level_struct *l );
   
 #endif

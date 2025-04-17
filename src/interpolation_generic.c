@@ -69,7 +69,7 @@ void interpolation_PRECISION_free( level_struct *l ) {
 }
 
 
-void define_interpolation_PRECISION_operator( complex_PRECISION **interpolation, level_struct *l, struct Thread *threading ) {
+void define_interpolation_PRECISION_operator( complex_PRECISION **interpolation, level_struct *l ) {
   
   int j, num_eig_vect = l->num_eig_vect;
   complex_PRECISION *operator = l->is_PRECISION.operator;
@@ -86,9 +86,9 @@ void define_interpolation_PRECISION_operator( complex_PRECISION **interpolation,
 }
 
 
-void interpolate_PRECISION( vector_PRECISION phi, vector_PRECISION phi_c, level_struct *l, struct Thread *threading ) {
+void interpolate_PRECISION( vector_PRECISION phi, vector_PRECISION phi_c, level_struct *l ) {
   
-  PROF_PRECISION_START( _PR, threading );
+  PROF_PRECISION_START( _PR );
   int i, j, k, k1, k2, num_aggregates = l->is_PRECISION.num_agg, num_eig_vect = l->num_eig_vect, sign = 1,
       num_parent_eig_vect = l->num_lattice_site_var/2, aggregate_sites = l->num_inner_lattice_sites / num_aggregates;
   complex_PRECISION *operator = l->is_PRECISION.operator, *phi_pt = phi,
@@ -114,14 +114,14 @@ void interpolate_PRECISION( vector_PRECISION phi, vector_PRECISION phi_c, level_
     }
   }
     
-  PROF_PRECISION_STOP( _PR, 1, threading );
+  PROF_PRECISION_STOP( _PR, 1 );
 
 }
 
 
-void interpolate3_PRECISION( vector_PRECISION phi, vector_PRECISION phi_c, level_struct *l, struct Thread *threading ) {
+void interpolate3_PRECISION( vector_PRECISION phi, vector_PRECISION phi_c, level_struct *l ) {
   
-  PROF_PRECISION_START( _PR, threading );
+  PROF_PRECISION_START( _PR );
   int i, j, k, k1, k2, num_aggregates = l->is_PRECISION.num_agg, num_eig_vect = l->num_eig_vect,
       num_parent_eig_vect = l->num_lattice_site_var/2, aggregate_sites = l->num_inner_lattice_sites / num_aggregates;
   complex_PRECISION *operator = l->is_PRECISION.operator, *phi_pt = phi,
@@ -149,15 +149,15 @@ void interpolate3_PRECISION( vector_PRECISION phi, vector_PRECISION phi_c, level
       }
     }
   }
-  PROF_PRECISION_STOP( _PR, 1, threading );
+  PROF_PRECISION_STOP( _PR, 1 );
 
 }
 
 
-void restrict_PRECISION( vector_PRECISION phi_c, vector_PRECISION phi, level_struct *l, struct Thread *threading ) {
+void restrict_PRECISION( vector_PRECISION phi_c, vector_PRECISION phi, level_struct *l ) {
   
 
-  PROF_PRECISION_START( _PR, threading );
+  PROF_PRECISION_START( _PR );
   int i, j, k, k1, k2, num_aggregates = l->is_PRECISION.num_agg, num_eig_vect = l->num_eig_vect, sign = 1,
       num_parent_eig_vect = l->num_lattice_site_var/2, aggregate_sites = l->num_inner_lattice_sites / num_aggregates;
   complex_PRECISION *operator = l->is_PRECISION.operator, *phi_pt = phi,
@@ -186,5 +186,5 @@ void restrict_PRECISION( vector_PRECISION phi_c, vector_PRECISION phi, level_str
   }
   
   vector_PRECISION_gather( phi_c, l->next_level->gs_PRECISION.transfer_buffer, l->next_level );
-  PROF_PRECISION_STOP( _PR, 1, threading );
+  PROF_PRECISION_STOP( _PR, 1 );
 }

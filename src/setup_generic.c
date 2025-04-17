@@ -21,12 +21,12 @@
 
 #include "main.h"
 
-void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l, struct Thread *threading );
-void inv_iter_inv_fcycle_PRECISION( int setup_iter, level_struct *l, struct Thread *threading );
-void testvector_analysis_PRECISION( vector_PRECISION *test_vectors, level_struct *l, struct Thread *threading );
-void read_tv_from_file_PRECISION( level_struct *l, struct Thread *threading );
+void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l );
+void inv_iter_inv_fcycle_PRECISION( int setup_iter, level_struct *l );
+void testvector_analysis_PRECISION( vector_PRECISION *test_vectors, level_struct *l );
+void read_tv_from_file_PRECISION( level_struct *l );
 
-void coarse_grid_correction_PRECISION_setup( level_struct *l, struct Thread *threading ) {
+void coarse_grid_correction_PRECISION_setup( level_struct *l ) {
   
   if ( !l->idle ) {
     
@@ -54,23 +54,23 @@ void coarse_grid_correction_PRECISION_setup( level_struct *l, struct Thread *thr
       if ( g.method >= 4 && g.odd_even ) {
         coarse_oddeven_setup_PRECISION( &(l->next_level->s_PRECISION.op), _REORDER, l->next_level );
       }
-      coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level, threading );
+      coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level );
       l->next_level->p_PRECISION.op = &(l->next_level->s_PRECISION.op);
     }
     if ( !l->next_level->idle && l->next_level->level == 0 && g.odd_even ) {
       coarse_oddeven_setup_PRECISION( &(l->next_level->s_PRECISION.op), _NO_REORDERING, l->next_level );
     } else if ( !l->next_level->idle && l->next_level->level == 0 ) {
-      coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level, threading );
+      coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level );
     }
   }
   
   if ( l->next_level->level > 0 ) {
-    next_level_setup( NULL, l->next_level, threading );
+    next_level_setup( NULL, l->next_level );
     if ( !l->next_level->idle )
       interpolation_PRECISION_alloc( l->next_level );
     if ( !l->idle ) {
       for ( int i=0; i<MIN(l->next_level->num_eig_vect,l->num_eig_vect); i++ ) {
-        restrict_PRECISION( l->next_level->is_PRECISION.test_vector[i], l->is_PRECISION.test_vector[i], l, threading );
+        restrict_PRECISION( l->next_level->is_PRECISION.test_vector[i], l->is_PRECISION.test_vector[i], l );
       }
       for ( int i=MIN(l->next_level->num_eig_vect,l->num_eig_vect); i<l->next_level->num_eig_vect; i++ ) {
         if ( !l->next_level->idle )
@@ -79,26 +79,26 @@ void coarse_grid_correction_PRECISION_setup( level_struct *l, struct Thread *thr
       }
     }
     if ( !l->next_level->idle )
-      interpolation_PRECISION_define( NULL, l->next_level, threading );
+      interpolation_PRECISION_define( NULL, l->next_level );
     
-    coarse_grid_correction_PRECISION_setup( l->next_level, threading );
+    coarse_grid_correction_PRECISION_setup( l->next_level );
   }
 }
 
 
-void iterative_PRECISION_setup( int setup_iter, level_struct *l, struct Thread *threading ) {
+void iterative_PRECISION_setup( int setup_iter, level_struct *l ) {
   if ( l->depth == 0 ) {
     switch ( g.interpolation ) {
-      case 2: inv_iter_inv_fcycle_PRECISION( setup_iter, l, threading ); break;
-      case 3: inv_iter_inv_fcycle_PRECISION( setup_iter, l, threading ); break;
-      case 4: read_tv_from_file_PRECISION( l, threading ); break;
-      default: inv_iter_2lvl_extension_setup_PRECISION( setup_iter, l, threading ); break;
+      case 2: inv_iter_inv_fcycle_PRECISION( setup_iter, l ); break;
+      case 3: inv_iter_inv_fcycle_PRECISION( setup_iter, l ); break;
+      case 4: read_tv_from_file_PRECISION( l ); break;
+      default: inv_iter_2lvl_extension_setup_PRECISION( setup_iter, l ); break;
     }
   }
 
   level_struct *lp = l;
   while( lp->level > 0 ) {
-    testvector_analysis_PRECISION( lp->is_PRECISION.test_vector, lp, threading );
+    testvector_analysis_PRECISION( lp->is_PRECISION.test_vector, lp );
     lp = lp->next_level;
     if ( lp == NULL )
       break;
@@ -106,12 +106,12 @@ void iterative_PRECISION_setup( int setup_iter, level_struct *l, struct Thread *
 }
 
 
-void read_tv_from_file_PRECISION( level_struct *l, struct Thread *threading ) {
+void read_tv_from_file_PRECISION( level_struct *l ) {
   
   if ( l->depth == 0 ) {
     if ( g.tv_io_single_file ) {
       vector_io_single_file( NULL, NULL, g.tv_io_file_name, _READ, l->num_eig_vect, "test vectors", l );
-      re_setup_PRECISION( l, threading );
+      re_setup_PRECISION( l );
     } else {
 
       int n = l->num_eig_vect, i;
@@ -124,13 +124,13 @@ void read_tv_from_file_PRECISION( level_struct *l, struct Thread *threading ) {
         sprintf( filename, "%s.%02d", g.tv_io_file_name, i );
         printf0("%s.%02d\n", g.tv_io_file_name, i );
         vector_io( (double*)tmp, filename, _READ, l );
-        trans_PRECISION( l->is_PRECISION.test_vector[i], tmp, l->s_PRECISION.op.translation_table, l, NULL );
+        trans_PRECISION( l->is_PRECISION.test_vector[i], tmp, l->s_PRECISION.op.translation_table, l );
       }
       
       FREE( tmp, complex_double, l->inner_vector_size );
 
 
-      re_setup_PRECISION( l, threading );
+      re_setup_PRECISION( l );
     }
   }
 }
@@ -162,7 +162,7 @@ void coarse_grid_correction_PRECISION_free( level_struct *l ) {
 }
 
 
-void interpolation_PRECISION_define( vector_double *V, level_struct *l, struct Thread *threading ) {
+void interpolation_PRECISION_define( vector_double *V, level_struct *l ) {
   
   int k, i, n = l->num_eig_vect,
       pc = 0, pi = 1, pn = n*6;
@@ -188,13 +188,13 @@ void interpolation_PRECISION_define( vector_double *V, level_struct *l, struct T
 //       }
       
       smoother_PRECISION( buffer[0], NULL, l->is_PRECISION.test_vector[k],
-                          1, _NO_RES, _NO_SHIFT, l, threading );
+                          1, _NO_RES, _NO_SHIFT, l );
       vector_PRECISION_copy( l->is_PRECISION.test_vector[k], buffer[0], start, end, l );
       smoother_PRECISION( buffer[0], NULL, l->is_PRECISION.test_vector[k],
-                          g.method>=4?1:2, _NO_RES, _NO_SHIFT, l, threading );
+                          g.method>=4?1:2, _NO_RES, _NO_SHIFT, l );
       vector_PRECISION_copy( l->is_PRECISION.test_vector[k], buffer[0], start, end, l );
       smoother_PRECISION( buffer[0], NULL, l->is_PRECISION.test_vector[k],
-                          g.method>=4?1:3, _NO_RES, _NO_SHIFT, l, threading );
+                          g.method>=4?1:3, _NO_RES, _NO_SHIFT, l );
       vector_PRECISION_copy( l->is_PRECISION.test_vector[k], buffer[0], start, end, l );
         
       pc += 6;
@@ -206,7 +206,7 @@ void interpolation_PRECISION_define( vector_double *V, level_struct *l, struct T
     
     for ( k=0; k<n; k++ ) {
       vector_PRECISION_real_scale( l->is_PRECISION.test_vector[k], l->is_PRECISION.test_vector[k],
-                                  1.0/global_norm_PRECISION( l->is_PRECISION.test_vector[k], 0, l->inner_vector_size, l, threading ),
+                                  1.0/global_norm_PRECISION( l->is_PRECISION.test_vector[k], 0, l->inner_vector_size, l ),
                                   start, end, l );
     }
     
@@ -214,7 +214,7 @@ void interpolation_PRECISION_define( vector_double *V, level_struct *l, struct T
     
     } else {
     for ( i=0; i<n; i++ ) {
-      trans_PRECISION( l->is_PRECISION.test_vector[i], V[i], l->s_PRECISION.op.translation_table, l, threading );
+      trans_PRECISION( l->is_PRECISION.test_vector[i], V[i], l->s_PRECISION.op.translation_table, l );
     }
   }
 
@@ -224,15 +224,15 @@ void interpolation_PRECISION_define( vector_double *V, level_struct *l, struct T
   
   
     
-  testvector_analysis_PRECISION( l->is_PRECISION.test_vector, l, threading );
+  testvector_analysis_PRECISION( l->is_PRECISION.test_vector, l );
 
-  gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, n, l, threading );
-  define_interpolation_PRECISION_operator( l->is_PRECISION.interpolation, l, threading );
+  gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, n, l );
+  define_interpolation_PRECISION_operator( l->is_PRECISION.interpolation, l );
   
 }
 
 
-void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
+void re_setup_PRECISION( level_struct *l ) {
   
   if ( l->level > 0 ) {
     if ( !l->idle ) {
@@ -240,32 +240,32 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
         vector_PRECISION_copy( l->is_PRECISION.interpolation[i], l->is_PRECISION.test_vector[i],
             0, l->num_inner_lattice_sites * l->num_lattice_site_var, l );
       }
-      gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, l->num_eig_vect, l, threading );
+      gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, l->num_eig_vect, l );
       if ( l->depth > 0 )
-        gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, l->num_eig_vect, l, threading );
-      define_interpolation_PRECISION_operator( l->is_PRECISION.interpolation, l, threading );
+        gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, l->num_eig_vect, l );
+      define_interpolation_PRECISION_operator( l->is_PRECISION.interpolation, l );
       coarse_operator_PRECISION_setup( l->is_PRECISION.interpolation, l );
       conf_PRECISION_gather( &(l->next_level->s_PRECISION.op), &(l->next_level->op_PRECISION), l->next_level );
       if ( !l->next_level->idle && l->next_level->level > 0 ) {
         schwarz_PRECISION_boundary_update( &(l->next_level->s_PRECISION), l->next_level );
         if ( g.method >= 4 && g.odd_even ) {
-          coarse_oddeven_re_setup_PRECISION( &(l->next_level->s_PRECISION.op), _REORDER, l->next_level, threading );
+          coarse_oddeven_re_setup_PRECISION( &(l->next_level->s_PRECISION.op), _REORDER, l->next_level );
         } else {
-          coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level, threading );
+          coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level );
         }
       }
       if ( !l->next_level->idle && l->next_level->level == 0 && g.odd_even ) {
-        coarse_oddeven_re_setup_PRECISION( &(l->next_level->s_PRECISION.op), _NO_REORDERING, l->next_level, threading );
+        coarse_oddeven_re_setup_PRECISION( &(l->next_level->s_PRECISION.op), _NO_REORDERING, l->next_level );
       } else if ( !l->next_level->idle && l->next_level->level == 0 ) {
-        coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level, threading );
+        coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level );
       }
-      re_setup_PRECISION( l->next_level, threading );
+      re_setup_PRECISION( l->next_level );
     }
   }  
 }
 
 
-void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l, struct Thread *threading ) {
+void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l ) {
   
   if ( !l->idle ) {
     vector_PRECISION buf1 = NULL;
@@ -286,18 +286,18 @@ void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l, s
       printf0("depth: %d, 2lvl correction step number %d...\n", l->depth, k+1 ); 
       printf0("\033[0;42m\033[1;37m|"); fflush(0);
       for ( int i=0; i<l->num_eig_vect; i++ ) {
-        restrict_PRECISION( gmres.b, l->is_PRECISION.test_vector[i], l, threading );
+        restrict_PRECISION( gmres.b, l->is_PRECISION.test_vector[i], l );
         if ( !l->next_level->idle ) {
           if ( g.odd_even && l->next_level->level == 0 ) {
-            coarse_solve_odd_even_PRECISION( &gmres, &(l->next_level->oe_op_PRECISION), l->next_level, threading );
+            coarse_solve_odd_even_PRECISION( &gmres, &(l->next_level->oe_op_PRECISION), l->next_level );
           } else {
-            fgmres_PRECISION( &gmres, l->next_level, threading );
+            fgmres_PRECISION( &gmres, l->next_level );
           }
         }
-        interpolate3_PRECISION( buf1, gmres.x, l, threading );
-        smoother_PRECISION( buf1, NULL, l->is_PRECISION.test_vector[i], l->post_smooth_iter, _RES, _NO_SHIFT, l, threading );
+        interpolate3_PRECISION( buf1, gmres.x, l );
+        smoother_PRECISION( buf1, NULL, l->is_PRECISION.test_vector[i], l->post_smooth_iter, _RES, _NO_SHIFT, l );
         vector_PRECISION_real_scale( l->is_PRECISION.test_vector[i], buf1,
-                                     1.0/global_norm_PRECISION( buf1, 0, l->inner_vector_size, l, threading ),
+                                     1.0/global_norm_PRECISION( buf1, 0, l->inner_vector_size, l ),
                                      0, l->num_inner_lattice_sites * l->num_lattice_site_var, l );
         pc += l->post_smooth_iter;
         if ( pc >= 0.2*pi*pn ) { printf0("%4d%% |", 20*pi); fflush(0); pi++; }
@@ -307,29 +307,29 @@ void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l, s
       for ( int i=0; i<l->num_eig_vect; i++ )
         vector_PRECISION_copy( l->is_PRECISION.interpolation[i], l->is_PRECISION.test_vector[i],
             0, l->num_inner_lattice_sites * l->num_lattice_site_var, l );
-      gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, l->num_eig_vect, l, threading );
+      gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, l->num_eig_vect, l );
       if ( l->depth > 0 )
-        gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, l->num_eig_vect, l, threading );
-      define_interpolation_PRECISION_operator( l->is_PRECISION.interpolation, l, threading );
+        gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, l->num_eig_vect, l );
+      define_interpolation_PRECISION_operator( l->is_PRECISION.interpolation, l );
       coarse_operator_PRECISION_setup( l->is_PRECISION.interpolation, l );
       conf_PRECISION_gather( &(l->next_level->s_PRECISION.op), &(l->next_level->op_PRECISION), l->next_level );
       if ( !l->next_level->idle && l->next_level->level > 0 ) {
         schwarz_PRECISION_boundary_update( &(l->next_level->s_PRECISION), l->next_level );
         if ( g.method >= 4 && g.odd_even ) {
-          coarse_oddeven_re_setup_PRECISION( &(l->next_level->s_PRECISION.op), _REORDER, l->next_level, threading );
+          coarse_oddeven_re_setup_PRECISION( &(l->next_level->s_PRECISION.op), _REORDER, l->next_level );
         } else {
-          coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level, threading );
+          coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level );
         }
       }
       if ( !l->next_level->idle && l->next_level->level == 0 && g.odd_even ) {
-        coarse_oddeven_re_setup_PRECISION( &(l->next_level->s_PRECISION.op), _NO_REORDERING, l->next_level, threading );
+        coarse_oddeven_re_setup_PRECISION( &(l->next_level->s_PRECISION.op), _NO_REORDERING, l->next_level );
       } else if ( !l->next_level->idle && l->next_level->level == 0 ) {
-        coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level, threading );
+        coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level );
       }
     }
     
     if ( l->level > 1 )
-      inv_iter_2lvl_extension_setup_PRECISION( setup_iter, l->next_level, threading );
+      inv_iter_2lvl_extension_setup_PRECISION( setup_iter, l->next_level );
 
     FREE( buf1, complex_PRECISION, l->vector_size );
     fgmres_PRECISION_struct_free( &gmres, l );
@@ -347,19 +347,19 @@ void set_kcycle_tol_PRECISION( PRECISION tol, level_struct *l ) {
 }
 
 
-void test_vector_PRECISION_update( int i, level_struct *l, struct Thread *threading ) {
+void test_vector_PRECISION_update( int i, level_struct *l ) {
   
   if ( l->level > 1 )
-    test_vector_PRECISION_update( i, l->next_level, threading );
+    test_vector_PRECISION_update( i, l->next_level );
   
   if ( !l->idle )
     vector_PRECISION_real_scale( l->is_PRECISION.test_vector[i], l->p_PRECISION.x,
-                                 1.0/global_norm_PRECISION( l->p_PRECISION.x, 0, l->inner_vector_size, l, threading ),
+                                 1.0/global_norm_PRECISION( l->p_PRECISION.x, 0, l->inner_vector_size, l ),
                                  0, l->num_inner_lattice_sites * l->num_lattice_site_var, l );
 }
 
 
-void inv_iter_inv_fcycle_PRECISION( int setup_iter, level_struct *l, struct Thread *threading ) {
+void inv_iter_inv_fcycle_PRECISION( int setup_iter, level_struct *l ) {
   
   vector_PRECISION v_buf = NULL;
   complex_PRECISION *buffer = NULL;
@@ -378,12 +378,12 @@ void inv_iter_inv_fcycle_PRECISION( int setup_iter, level_struct *l, struct Thre
       if ( g.print > 0 ) printf0("depth: %d, bootstrap step number %d...\n", l->depth, j+1 );
       if ( g.print > 0 ) { printf0("\033[0;42m\033[1;37m|"); if ( g.my_rank == 0 ) fflush(0); }
       
-      gram_schmidt_PRECISION( l->is_PRECISION.test_vector, buffer, 0, l->num_eig_vect, l, threading );
+      gram_schmidt_PRECISION( l->is_PRECISION.test_vector, buffer, 0, l->num_eig_vect, l );
       
       for ( int i=0; i<l->num_eig_vect; i++ ) {
-        vcycle_PRECISION( l->p_PRECISION.x, NULL, l->is_PRECISION.test_vector[i], _NO_RES, l, threading );
+        vcycle_PRECISION( l->p_PRECISION.x, NULL, l->is_PRECISION.test_vector[i], _NO_RES, l );
         
-        test_vector_PRECISION_update( i, l, threading );
+        test_vector_PRECISION_update( i, l );
         
         pc += l->post_smooth_iter;
         if ( pc >= (int)((0.2*pi)*pn) ) { if ( g.print > 0 ) { printf0("%4d%% |", 20*pi); if ( g.my_rank == 0 ) fflush(0); } pi++; }
@@ -391,16 +391,16 @@ void inv_iter_inv_fcycle_PRECISION( int setup_iter, level_struct *l, struct Thre
 
       if ( g.print > 0 ) printf0("\033[0m\n");
       
-      re_setup_PRECISION( l, threading );
+      re_setup_PRECISION( l );
       
       if ( l->depth == 0 && l->next_level->level > 0 ) {
         inv_iter_inv_fcycle_PRECISION( MAX(1,round( ((double)(j+1)*l->next_level->setup_iter)/
-        ((double)setup_iter) )), l->next_level, threading );
+        ((double)setup_iter) )), l->next_level );
       }
     }
     if ( l->depth > 0 && l->next_level->level > 0 ) {
       inv_iter_inv_fcycle_PRECISION( MAX(1, round((double)(l->next_level->setup_iter*setup_iter)/
-      ((double)l->setup_iter))), l->next_level, threading );
+      ((double)l->setup_iter))), l->next_level );
     }
   }
   
@@ -413,7 +413,7 @@ void inv_iter_inv_fcycle_PRECISION( int setup_iter, level_struct *l, struct Thre
 }
 
 
-void testvector_analysis_PRECISION( vector_PRECISION *test_vectors, level_struct *l, struct Thread *threading ) {
+void testvector_analysis_PRECISION( vector_PRECISION *test_vectors, level_struct *l ) {
 #ifdef TESTVECTOR_ANALYSIS
   if ( l->depth == 0 ) {
     

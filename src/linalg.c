@@ -22,10 +22,9 @@
 #include "main.h"
 
 void process_multi_inner_product_MP( int count, complex_double *results, vector_float *phi,
-                                     vector_float psi, int start, int end, level_struct *l,
-                                     struct Thread *threading ) {
+                                     vector_float psi, int start, int end, level_struct *l) {
 
-  PROF_float_START( _PIP, threading );
+  PROF_float_START( _PIP );
   int i;
   for(int c=0; c<count; c++)
     results[c] = 0.0;
@@ -36,12 +35,12 @@ void process_multi_inner_product_MP( int count, complex_double *results, vector_
     }
   }
 
-  PROF_float_STOP( _PIP, (double)(end-start)/(double)l->inner_vector_size, threading );
+  PROF_float_STOP( _PIP, (double)(end-start)/(double)l->inner_vector_size );
 }
 
-double global_norm_MP( vector_float x, int start, int end, level_struct *l, struct Thread *threading ) {
+double global_norm_MP( vector_float x, int start, int end, level_struct *l ) {
   
-  PROF_float_START( _GIP, threading );
+  PROF_float_START( _GIP );
   
   int i;
   double local_alpha = 0, global_alpha = 0;
@@ -53,10 +52,10 @@ double global_norm_MP( vector_float x, int start, int end, level_struct *l, stru
     PROF_double_START( _ALLR );
     MPI_Allreduce( &local_alpha, &global_alpha, 1, MPI_double, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_float.level_comm );
     PROF_double_STOP( _ALLR, 1 );
-    PROF_float_STOP( _GIP, (double)(end-start)/(double)l->inner_vector_size, threading );
+    PROF_float_STOP( _GIP, (double)(end-start)/(double)l->inner_vector_size );
     return sqrt((double)global_alpha);
   } else {
-    PROF_float_STOP( _GIP, (double)(end-start)/(double)l->inner_vector_size, threading );
+    PROF_float_STOP( _GIP, (double)(end-start)/(double)l->inner_vector_size );
     return sqrt((double)local_alpha);
   }
 }

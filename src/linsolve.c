@@ -150,7 +150,7 @@ void fgmres_MP_struct_free( gmres_MP_struct *p ) {
 } 
   
   
-int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
+int fgmres_MP( gmres_MP_struct *p, level_struct *l ) {
   
 /*********************************************************************************
 * Uses FGMRES to solve the system D x = b, where b is taken from p->b and x is 
@@ -184,10 +184,10 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
     if( ol == 0 && p->dp.initial_guess_zero ) {
       vector_double_copy( p->dp.r, p->dp.b, start, end, l );
     } else {
-      apply_operator_double( p->dp.r, p->dp.x, &(p->dp), l, threading ); // compute r <- D*x
+      apply_operator_double( p->dp.r, p->dp.x, &(p->dp), l ); // compute r <- D*x
       vector_double_minus( p->dp.r, p->dp.b, p->dp.r, start, end, l ); // compute r <- b - r
     }
-    gamma0 = (complex_double) global_norm_double( p->dp.r, p->dp.v_start, p->dp.v_end, l, threading ); // gamma_0 = norm(r)
+    gamma0 = (complex_double) global_norm_double( p->dp.r, p->dp.v_start, p->dp.v_end, l ); // gamma_0 = norm(r)
     p->dp.gamma[0] = gamma0;
     
     if( ol == 0) {
@@ -203,17 +203,17 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
     }
 #endif
     
-    trans_float( p->sp.V[0], p->dp.r, l->s_float.op.translation_table, l, threading );
+    trans_float( p->sp.V[0], p->dp.r, l->s_float.op.translation_table, l );
     vector_float_real_scale( p->sp.V[0], p->sp.V[0], (float)(1/p->dp.gamma[0]), start, end, l ); // V[0] <- r / gamma_0
     
     // inner loop in single precision
     for( il=0; il<p->dp.restart_length && finish==0; il++) {
       j = il; iter++;
       arnoldi_step_MP( p->sp.V, p->sp.Z, p->sp.w, p->dp.H, p->dp.y, j, p->sp.preconditioner,
-                       p->sp.shift, &(p->sp), l, threading );
+                       p->sp.shift, &(p->sp), l );
       
       if ( cabs( p->dp.H[j][j+1] ) > 1E-15 ) {
-        qr_update_double( p->dp.H, p->dp.s, p->dp.c, p->dp.gamma, j, l, threading );
+        qr_update_double( p->dp.H, p->dp.s, p->dp.c, p->dp.gamma, j, l );
         gamma_jp1 = cabs( p->dp.gamma[j+1] );	  
         
         if ( iter%10 == 0 || p->sp.preconditioner != NULL || l->depth > 0 ) {
@@ -233,9 +233,9 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
       }
     } // end of a single restart
     compute_solution_MP( p->sp.w, (p->sp.preconditioner&&p->sp.kind==_RIGHT)?p->sp.Z:p->sp.V,
-                         p->dp.y, p->dp.gamma, p->dp.H, j, &(p->sp), l, threading );
+                         p->dp.y, p->dp.gamma, p->dp.H, j, &(p->sp), l );
                                 
-    trans_back_float( p->dp.r, p->sp.w, l->s_float.op.translation_table, l, threading );
+    trans_back_float( p->dp.r, p->sp.w, l->s_float.op.translation_table, l );
     if ( ol == 0 ) {
       vector_double_copy( p->dp.x, p->dp.r, start, end, l );
     } else {
@@ -247,9 +247,9 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
   
   if ( p->dp.print ) {
 #ifdef FGMRES_RESTEST
-    apply_operator_double( p->dp.r, p->dp.x, &(p->dp), l, threading );
+    apply_operator_double( p->dp.r, p->dp.x, &(p->dp), l );
     vector_double_minus( p->dp.r, p->dp.b, p->dp.r, start, end, l );
-    beta = global_norm_double( p->dp.r, p->dp.v_start, p->dp.v_end, l, threading );
+    beta = global_norm_double( p->dp.r, p->dp.v_start, p->dp.v_end, l );
 #else
     beta = gamma_jp1;
 #endif
@@ -291,8 +291,7 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
 
 void arnoldi_step_MP( vector_float *V, vector_float *Z, vector_float w,
                       complex_double **H, complex_double* buffer, int j, void (*prec)(),
-                      complex_float shift, gmres_float_struct *p, level_struct *l,
-                      struct Thread *threading ) {
+                      complex_float shift, gmres_float_struct *p, level_struct *l) {
   
   int i;
   // start and end indices for vector functions depending on thread
@@ -301,26 +300,26 @@ void arnoldi_step_MP( vector_float *V, vector_float *Z, vector_float w,
   
   if ( prec != NULL ) {
     if ( p->kind == _LEFT ) {
-      apply_operator_float( Z[0], V[j], p, l, threading );
+      apply_operator_float( Z[0], V[j], p, l );
       if ( shift ) vector_float_saxpy( Z[0], Z[0], V[j], shift, start, end, l );
-      prec( w, NULL, Z[0], _NO_RES, l, threading );
+      prec( w, NULL, Z[0], _NO_RES, l );
     } else {
       if ( g.mixed_precision == 2 && (g.method >= 1 && g.method <= 2 ) ) {
-        prec( Z[j], w, V[j], _NO_RES, l, threading );
+        prec( Z[j], w, V[j], _NO_RES, l );
         // obtains w = D * Z[j] from Schwarz
       } else {
-        prec( Z[j], NULL, V[j], _NO_RES, l, threading );
-        apply_operator_float( w, Z[j], p, l, threading ); // w = D*Z[j]
+        prec( Z[j], NULL, V[j], _NO_RES, l );
+        apply_operator_float( w, Z[j], p, l ); // w = D*Z[j]
       }
       if ( shift ) vector_float_saxpy( w, w, Z[j], shift, start, end, l );
     }
   } else {
-    apply_operator_float( w, V[j], p, l, threading ); // w = D*V[j]
+    apply_operator_float( w, V[j], p, l ); // w = D*V[j]
     if ( shift ) vector_float_saxpy( w, w, V[j], shift, start, end, l );
   }
 
   complex_double tmp[j+1];
-  process_multi_inner_product_MP( j+1, tmp, V, w, p->v_start, p->v_end, l, threading );
+  process_multi_inner_product_MP( j+1, tmp, V, w, p->v_start, p->v_end, l );
   for( i=0; i<=j; i++ )
     buffer[i] = tmp[i];
   
@@ -339,7 +338,7 @@ void arnoldi_step_MP( vector_float *V, vector_float *Z, vector_float w,
     alpha[i] = (complex_float) -H[j][i];
   vector_float_multi_saxpy( w, V, alpha, 1, j+1, start, end, l );
   
-  complex_double tmp2 = global_norm_MP( w, p->v_start, p->v_end, l, threading );
+  complex_double tmp2 = global_norm_MP( w, p->v_start, p->v_end, l );
   H[j][j+1] = tmp2;
   
   // V_j+1 = w / H_j+1,j
@@ -350,7 +349,7 @@ void arnoldi_step_MP( vector_float *V, vector_float *Z, vector_float w,
 
 void compute_solution_MP( vector_float x, vector_float *V, complex_double *y,
                           complex_double *gamma, complex_double **H, int j,
-                          gmres_float_struct *p, level_struct *l, struct Thread *threading ) {
+                          gmres_float_struct *p, level_struct *l ) {
   
   int i, k;
   // start and end indices for vector functions depending on thread

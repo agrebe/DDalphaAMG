@@ -23,40 +23,40 @@
 #include "preconditioner.h"
 
 void preconditioner( vector_double phi, vector_double Dphi, vector_double eta,
-                      const int res, level_struct *l, struct Thread *threading ) {
+                      const int res, level_struct *l ) {
   if ( g.method == 0 )
     vector_double_copy( phi, eta, 0, l->num_inner_lattice_sites * l->num_lattice_site_var, l );
   else if ( g.method < 5 || g.method == 6 || !g.odd_even ) {
     if ( g.mixed_precision ) {
-      trans_float( l->sbuf_float[0], eta, l->s_float.op.translation_table, l, threading );
-      vcycle_float( l->sbuf_float[1], NULL, l->sbuf_float[0], res, l, threading );
-      trans_back_float( phi, l->sbuf_float[1], l->s_float.op.translation_table, l, threading );
+      trans_float( l->sbuf_float[0], eta, l->s_float.op.translation_table, l );
+      vcycle_float( l->sbuf_float[1], NULL, l->sbuf_float[0], res, l );
+      trans_back_float( phi, l->sbuf_float[1], l->s_float.op.translation_table, l );
     } else {
-      trans_double( l->sbuf_double[0], eta, l->s_double.op.translation_table, l, threading );
-      vcycle_double( l->sbuf_double[1], NULL, l->sbuf_double[0], res, l, threading );
-      trans_back_double( phi, l->sbuf_double[1], l->s_double.op.translation_table, l, threading );
+      trans_double( l->sbuf_double[0], eta, l->s_double.op.translation_table, l );
+      vcycle_double( l->sbuf_double[1], NULL, l->sbuf_double[0], res, l );
+      trans_back_double( phi, l->sbuf_double[1], l->s_double.op.translation_table, l );
     }
   } else {
     if ( g.mixed_precision ) {
       l->sp_float.num_restart = l->n_cy;
       l->sp_float.initial_guess_zero = res;
-      serial_to_oddeven_float( l->sp_float.b, eta, l, threading );
+      serial_to_oddeven_float( l->sp_float.b, eta, l );
       if ( g.method == 6 ) {
-        g5D_solve_oddeven_float( &(l->sp_float), &(l->oe_op_float), l, threading );
+        g5D_solve_oddeven_float( &(l->sp_float), &(l->oe_op_float), l );
       } else {
-        solve_oddeven_float( &(l->sp_float), &(l->oe_op_float), l, threading );
+        solve_oddeven_float( &(l->sp_float), &(l->oe_op_float), l );
       }
-      oddeven_to_serial_float( phi, l->sp_float.x, l, threading );
+      oddeven_to_serial_float( phi, l->sp_float.x, l );
     } else {
       l->sp_double.num_restart = l->n_cy;
       l->sp_double.initial_guess_zero = res;
-      serial_to_oddeven_double( l->sp_double.b, eta, l, threading );
+      serial_to_oddeven_double( l->sp_double.b, eta, l );
       if ( g.method == 6 ) {
-        g5D_solve_oddeven_double( &(l->sp_double), &(l->oe_op_double), l, threading );
+        g5D_solve_oddeven_double( &(l->sp_double), &(l->oe_op_double), l );
       } else {
-        solve_oddeven_double( &(l->sp_double), &(l->oe_op_double), l, threading );
+        solve_oddeven_double( &(l->sp_double), &(l->oe_op_double), l );
       }
-      oddeven_to_serial_double( phi, l->sp_double.x, l, threading );
+      oddeven_to_serial_double( phi, l->sp_double.x, l );
     }
     
   }

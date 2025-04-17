@@ -29,6 +29,6 @@
   void operator_PRECISION_define( operator_PRECISION_struct *op, level_struct *l );
   void operator_PRECISION_free( operator_PRECISION_struct *op, const int type, level_struct *l );
   
-  void operator_PRECISION_test_routine( operator_PRECISION_struct *op, level_struct *l, struct Thread *threading );
+  void operator_PRECISION_test_routine( operator_PRECISION_struct *op, level_struct *l );
   
 #endif

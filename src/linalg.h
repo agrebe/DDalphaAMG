@@ -31,9 +31,8 @@
                                  int sign, int count, int start, int end, level_struct *l );
   
   void process_multi_inner_product_MP( int count, complex_double *results, vector_float *phi,
-                                       vector_float psi, int start, int end, level_struct *l,
-                                       struct Thread *threading );
+                                       vector_float psi, int start, int end, level_struct *l);
                                        
-  double global_norm_MP( vector_float x, int start, int end, level_struct *l, struct Thread *threading );
+  double global_norm_MP( vector_float x, int start, int end, level_struct *l );
   
 #endif

@@ -115,12 +115,12 @@ void coarse_LU_multiply_PRECISION( vector_PRECISION y, vector_PRECISION x, confi
 
 void coarse_diag_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_PRECISION_struct *op, level_struct *l ) {
   
-  coarse_diag_ee_PRECISION( y, x, op, l, NULL );
-  coarse_diag_oo_PRECISION( y, x, op, l, NULL );
+  coarse_diag_ee_PRECISION( y, x, op, l );
+  coarse_diag_oo_PRECISION( y, x, op, l );
 }
 
 
-void coarse_diag_ee_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
+void coarse_diag_ee_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_PRECISION_struct *op, level_struct *l) {
   
   int start = 0;
   int end = op->num_even_sites;
@@ -130,7 +130,7 @@ void coarse_diag_ee_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_
 }
 
 
-void coarse_diag_oo_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
+void coarse_diag_oo_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_PRECISION_struct *op, level_struct *l ) {
   
   int n1 = op->num_even_sites, n2 = op->num_odd_sites,
       offset = l->num_lattice_site_var, ess = (l->num_lattice_site_var/2)*(l->num_lattice_site_var+1);
@@ -153,7 +153,7 @@ void coarse_diag_oo_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_
 }
 
 
-void coarse_diag_oo_inv_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
+void coarse_diag_oo_inv_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_PRECISION_struct *op, level_struct *l ) {
   
   int n1 = op->num_even_sites, n2 = op->num_odd_sites, start = n1, end = n1 + n2;
 
@@ -173,7 +173,7 @@ void coarse_diag_oo_inv_PRECISION( vector_PRECISION y, vector_PRECISION x, opera
   }
 }
 
-void coarse_oddeven_setup_PRECISION_set_couplings( operator_PRECISION_struct *in, int reorder, level_struct *l, struct Thread *threading ) {
+void coarse_oddeven_setup_PRECISION_set_couplings( operator_PRECISION_struct *in, int reorder, level_struct *l ) {
 
   int i, j, n=l->num_inner_lattice_sites, sc_size = (l->num_lattice_site_var/2)*(l->num_lattice_site_var+1),
       nc_size = SQUARE(l->num_lattice_site_var),
@@ -284,7 +284,7 @@ void coarse_oddeven_setup_PRECISION( operator_PRECISION_struct *in, int reorder,
   MALLOC( op->D, complex_PRECISION, 4*nc_size*n );
   MALLOC( op->clover, complex_PRECISION, lu_dec_size*n );
 
-  coarse_oddeven_setup_PRECISION_set_couplings( in, reorder, l, NULL );
+  coarse_oddeven_setup_PRECISION_set_couplings( in, reorder, l );
     
   // define data layout
   MALLOC( op->index_table, int, N[T]*N[Z]*N[Y]*N[X] );
@@ -329,8 +329,8 @@ void coarse_oddeven_setup_PRECISION( operator_PRECISION_struct *in, int reorder,
     l->sp_PRECISION.v_end = op->num_even_sites*l->num_lattice_site_var;
 }
 
-void coarse_oddeven_re_setup_PRECISION( operator_PRECISION_struct *in, int reorder, level_struct *l, struct Thread *threading ) {
-  coarse_oddeven_setup_PRECISION_set_couplings( in, reorder, l, threading );
+void coarse_oddeven_re_setup_PRECISION( operator_PRECISION_struct *in, int reorder, level_struct *l ) {
+  coarse_oddeven_setup_PRECISION_set_couplings( in, reorder, l );
 }
 
 
@@ -363,7 +363,7 @@ void coarse_oddeven_free_PRECISION( level_struct *l ) {
 
 
 void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op,
-                                    const int amount, level_struct *l, struct Thread *threading ) {
+                                    const int amount, level_struct *l ) {
 
   int mu, i, index, num_site_var=l->num_lattice_site_var,
       num_4link_var=4*l->num_lattice_site_var*l->num_lattice_site_var,
@@ -375,7 +375,7 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 
   // assumptions (1) self coupling has already been performed
   //          OR (2) "out" is initialized with zeros
-  set_boundary_PRECISION( out, 0, l, threading );
+  set_boundary_PRECISION( out, 0, l );
   
   if ( amount == _EVEN_SITES ) {
     minus_dir_param = _ODD_SITES;
@@ -486,7 +486,7 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 
 
 void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op,
-                                      const int amount, level_struct *l, struct Thread *threading ) {
+                                      const int amount, level_struct *l ) {
 
   int mu, i, index, num_site_var=l->num_lattice_site_var,
       num_4link_var=4*l->num_lattice_site_var*l->num_lattice_site_var,
@@ -498,7 +498,7 @@ void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in,
 
   // assumptions (1) self coupling has already been performed
   //          OR (2) "out" is initialized with zeros
-  set_boundary_PRECISION( out, 0, l, threading );
+  set_boundary_PRECISION( out, 0, l );
   
   if ( amount == _EVEN_SITES ) {
     minus_dir_param = _ODD_SITES;
@@ -609,28 +609,28 @@ void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in,
 }
 
 
-void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
+void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECISION_struct *op, level_struct *l ) {
   
-  PROF_PRECISION_START( _SC, threading );
-  coarse_diag_oo_inv_PRECISION( p->x, p->b, op, l, threading );
-  PROF_PRECISION_STOP( _SC, 0, threading );
-  PROF_PRECISION_START( _NC, threading );
-  coarse_n_hopping_term_PRECISION( p->b, p->x, op, _EVEN_SITES, l, threading );
-  PROF_PRECISION_STOP( _NC, 0, threading );
+  PROF_PRECISION_START( _SC );
+  coarse_diag_oo_inv_PRECISION( p->x, p->b, op, l );
+  PROF_PRECISION_STOP( _SC, 0 );
+  PROF_PRECISION_START( _NC );
+  coarse_n_hopping_term_PRECISION( p->b, p->x, op, _EVEN_SITES, l );
+  PROF_PRECISION_STOP( _NC, 0 );
   
-  fgmres_PRECISION( p, l, threading );
+  fgmres_PRECISION( p, l );
   
   // even to odd
-  PROF_PRECISION_START( _NC, threading );
-  coarse_n_hopping_term_PRECISION( p->b, p->x, op, _ODD_SITES, l, threading );
-  PROF_PRECISION_STOP( _NC, 1, threading );
-  PROF_PRECISION_START( _SC, threading );
-  coarse_diag_oo_inv_PRECISION( p->x, p->b, op, l, threading );
-  PROF_PRECISION_STOP( _SC, 1, threading );
+  PROF_PRECISION_START( _NC );
+  coarse_n_hopping_term_PRECISION( p->b, p->x, op, _ODD_SITES, l );
+  PROF_PRECISION_STOP( _NC, 1 );
+  PROF_PRECISION_START( _SC );
+  coarse_diag_oo_inv_PRECISION( p->x, p->b, op, l );
+  PROF_PRECISION_STOP( _SC, 1 );
 }
 
 
-void coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
+void coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op, level_struct *l ) {
     
   // start and end indices for vector functions depending on thread
   int start = op->num_even_sites*l->num_lattice_site_var;
@@ -638,23 +638,23 @@ void coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECI
 
   vector_PRECISION *tmp = op->buffer;
   
-  PROF_PRECISION_START( _SC, threading );
-  coarse_diag_ee_PRECISION( out, in, op, l, threading );
-  PROF_PRECISION_STOP( _SC, 0, threading );
+  PROF_PRECISION_START( _SC );
+  coarse_diag_ee_PRECISION( out, in, op, l );
+  PROF_PRECISION_STOP( _SC, 0 );
   vector_PRECISION_define( tmp[0], 0, start, end, l );
-  PROF_PRECISION_START( _NC, threading );
-  coarse_hopping_term_PRECISION( tmp[0], in, op, _ODD_SITES, l, threading );
-  PROF_PRECISION_STOP( _NC, 0, threading );
-  PROF_PRECISION_START( _SC, threading );
-  coarse_diag_oo_inv_PRECISION( tmp[1], tmp[0], op, l, threading );
-  PROF_PRECISION_STOP( _SC, 1, threading );
-  PROF_PRECISION_START( _NC, threading );
-  coarse_n_hopping_term_PRECISION( out, tmp[1], op, _EVEN_SITES, l, threading );
-  PROF_PRECISION_STOP( _NC, 1, threading );
+  PROF_PRECISION_START( _NC );
+  coarse_hopping_term_PRECISION( tmp[0], in, op, _ODD_SITES, l );
+  PROF_PRECISION_STOP( _NC, 0 );
+  PROF_PRECISION_START( _SC );
+  coarse_diag_oo_inv_PRECISION( tmp[1], tmp[0], op, l );
+  PROF_PRECISION_STOP( _SC, 1 );
+  PROF_PRECISION_START( _NC );
+  coarse_n_hopping_term_PRECISION( out, tmp[1], op, _EVEN_SITES, l );
+  PROF_PRECISION_STOP( _NC, 1 );
 }
 
 
-void g5D_coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
+void g5D_coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECISION_struct *op, level_struct *l ) {
   
   int start_even, end_even, start_odd, end_odd;
   start_even = 0;
@@ -665,35 +665,35 @@ void g5D_coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PR
   
   vector_PRECISION_define( tmp, 0, start_even, end_even, l );
   
-  PROF_PRECISION_START( _SC, threading );
+  PROF_PRECISION_START( _SC );
   coarse_gamma5_PRECISION( p->b, p->b, start_odd, end_odd, l );
-  coarse_diag_oo_inv_PRECISION( p->x, p->b, op, l, threading );
+  coarse_diag_oo_inv_PRECISION( p->x, p->b, op, l );
   coarse_gamma5_PRECISION( p->b, p->b, start_odd, end_odd, l );
-  PROF_PRECISION_STOP( _SC, 0, threading );
-  PROF_PRECISION_START( _NC, threading );
-  coarse_n_hopping_term_PRECISION( tmp, p->x, op, _EVEN_SITES, l, threading );
-  PROF_PRECISION_STOP( _NC, 0, threading );
+  PROF_PRECISION_STOP( _SC, 0 );
+  PROF_PRECISION_START( _NC );
+  coarse_n_hopping_term_PRECISION( tmp, p->x, op, _EVEN_SITES, l );
+  PROF_PRECISION_STOP( _NC, 0 );
   coarse_gamma5_PRECISION( tmp, tmp, start_even, end_even, l );
   vector_PRECISION_plus( p->b, p->b, tmp, start_even, end_even, l );
   
-  fgmres_PRECISION( p, l, threading );
+  fgmres_PRECISION( p, l );
   coarse_gamma5_PRECISION( p->b, p->b, start_odd, end_odd, l );
-  coarse_diag_oo_inv_PRECISION( p->x, p->b, op, l, threading );
+  coarse_diag_oo_inv_PRECISION( p->x, p->b, op, l );
   
   // even to odd
-  PROF_PRECISION_START( _NC, threading );
+  PROF_PRECISION_START( _NC );
   vector_PRECISION_define( tmp, 0, start_odd, end_odd, l );
-  coarse_n_hopping_term_PRECISION( tmp, p->x, op, _ODD_SITES, l, threading );
-  PROF_PRECISION_STOP( _NC, 1, threading );
-  PROF_PRECISION_START( _SC, threading );
-  coarse_diag_oo_inv_PRECISION( p->b, tmp, op, l, threading );
+  coarse_n_hopping_term_PRECISION( tmp, p->x, op, _ODD_SITES, l );
+  PROF_PRECISION_STOP( _NC, 1 );
+  PROF_PRECISION_START( _SC );
+  coarse_diag_oo_inv_PRECISION( p->b, tmp, op, l );
   vector_PRECISION_plus( p->x, p->x, p->b, start_odd, end_odd, l );
   
-  PROF_PRECISION_STOP( _SC, 1, threading );
+  PROF_PRECISION_STOP( _SC, 1 );
 }
 
 
-void g5D_coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
+void g5D_coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op, level_struct *l ) {
     
   int start_even, end_even, start_odd, end_odd;
   start_even = 0;
@@ -702,24 +702,24 @@ void g5D_coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_P
 
   vector_PRECISION *tmp = op->buffer;
   
-  PROF_PRECISION_START( _SC, threading );
-  coarse_diag_ee_PRECISION( out, in, op, l, threading );
-  PROF_PRECISION_STOP( _SC, 0, threading );
+  PROF_PRECISION_START( _SC );
+  coarse_diag_ee_PRECISION( out, in, op, l );
+  PROF_PRECISION_STOP( _SC, 0 );
   vector_PRECISION_define( tmp[0], 0, start_odd, end_odd, l );
-  PROF_PRECISION_START( _NC, threading );
-  coarse_hopping_term_PRECISION( tmp[0], in, op, _ODD_SITES, l, threading );
-  PROF_PRECISION_STOP( _NC, 0, threading );
-  PROF_PRECISION_START( _SC, threading );
-  coarse_diag_oo_inv_PRECISION( tmp[1], tmp[0], op, l, threading );
-  PROF_PRECISION_STOP( _SC, 1, threading );
-  PROF_PRECISION_START( _NC, threading );
-  coarse_n_hopping_term_PRECISION( out, tmp[1], op, _EVEN_SITES, l, threading );
-  PROF_PRECISION_STOP( _NC, 1, threading );
+  PROF_PRECISION_START( _NC );
+  coarse_hopping_term_PRECISION( tmp[0], in, op, _ODD_SITES, l );
+  PROF_PRECISION_STOP( _NC, 0 );
+  PROF_PRECISION_START( _SC );
+  coarse_diag_oo_inv_PRECISION( tmp[1], tmp[0], op, l );
+  PROF_PRECISION_STOP( _SC, 1 );
+  PROF_PRECISION_START( _NC );
+  coarse_n_hopping_term_PRECISION( out, tmp[1], op, _EVEN_SITES, l );
+  PROF_PRECISION_STOP( _NC, 1 );
   coarse_gamma5_PRECISION( out, out, start_even, end_even, l );
 }
 
 
-void coarse_odd_even_PRECISION_test( vector_PRECISION out, vector_PRECISION in, level_struct *l, struct Thread *threading ) {
+void coarse_odd_even_PRECISION_test( vector_PRECISION out, vector_PRECISION in, level_struct *l ) {
   
   if ( g.odd_even ) {
     vector_PRECISION buf1 = NULL, buf2 = NULL;
@@ -732,31 +732,31 @@ void coarse_odd_even_PRECISION_test( vector_PRECISION out, vector_PRECISION in, 
     // even to odd
     vector_PRECISION_define( out, 0, l->oe_op_PRECISION.num_even_sites*l->num_lattice_site_var, l->inner_vector_size, l );
 
-    coarse_hopping_term_PRECISION( out, buf1, &(l->oe_op_PRECISION), _ODD_SITES, l, threading );
-    coarse_diag_oo_inv_PRECISION( buf2, out, &(l->oe_op_PRECISION), l, threading );
+    coarse_hopping_term_PRECISION( out, buf1, &(l->oe_op_PRECISION), _ODD_SITES, l );
+    coarse_diag_oo_inv_PRECISION( buf2, out, &(l->oe_op_PRECISION), l );
 
     vector_PRECISION_plus( buf1, buf1, buf2, l->oe_op_PRECISION.num_even_sites*l->num_lattice_site_var, l->inner_vector_size, l );
     
     // block diagonal part
     if ( g.method == 6 ) {
-      g5D_coarse_apply_schur_complement_PRECISION( out, buf1, &(l->oe_op_PRECISION), l, threading );
+      g5D_coarse_apply_schur_complement_PRECISION( out, buf1, &(l->oe_op_PRECISION), l );
     } else {
-      coarse_apply_schur_complement_PRECISION( out, buf1, &(l->oe_op_PRECISION), l, threading );
+      coarse_apply_schur_complement_PRECISION( out, buf1, &(l->oe_op_PRECISION), l );
     }
     
-    coarse_diag_oo_PRECISION( out, buf1, &(l->oe_op_PRECISION), l, threading );
+    coarse_diag_oo_PRECISION( out, buf1, &(l->oe_op_PRECISION), l );
     
     // back transformation part
-    coarse_diag_oo_inv_PRECISION( buf2, out, &(l->oe_op_PRECISION), l, threading );
+    coarse_diag_oo_inv_PRECISION( buf2, out, &(l->oe_op_PRECISION), l );
     
     if ( g.method == 6 ) {
       coarse_gamma5_PRECISION( out, out, l->oe_op_PRECISION.num_even_sites*l->num_lattice_site_var, l->inner_vector_size, l );
       vector_PRECISION_define( buf1, 0, 0, l->oe_op_PRECISION.num_even_sites*l->num_lattice_site_var, l );
-      coarse_hopping_term_PRECISION( buf1, buf2, &(l->oe_op_PRECISION), _EVEN_SITES, l, NULL );
+      coarse_hopping_term_PRECISION( buf1, buf2, &(l->oe_op_PRECISION), _EVEN_SITES, l );
       coarse_gamma5_PRECISION( buf1, buf1, 0, l->oe_op_PRECISION.num_even_sites*l->num_lattice_site_var, l );
       vector_PRECISION_plus( out, out, buf1, 0, l->oe_op_PRECISION.num_even_sites*l->num_lattice_site_var, l );
     } else {
-      coarse_hopping_term_PRECISION( out, buf2, &(l->oe_op_PRECISION), _EVEN_SITES, l, threading );
+      coarse_hopping_term_PRECISION( out, buf2, &(l->oe_op_PRECISION), _EVEN_SITES, l );
     }
 
     PUBLIC_FREE( buf1, complex_PRECISION, 2*l->vector_size );

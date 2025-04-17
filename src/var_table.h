@@ -41,10 +41,10 @@
     \
     if ( g.vt.track_error ) { \
       MALLOC( v, complex_double, l->inner_vector_size ); \
-      if (g.mixed_precision==2) fgmres_MP( &(g.p_MP), l, NULL ); \
-      else fgmres_double( &(g.p), l, NULL ); \
+      if (g.mixed_precision==2) fgmres_MP( &(g.p_MP), l ); \
+      else fgmres_double( &(g.p), l ); \
       vector_double_copy( v, x, 0, l->inner_vector_size, l ); \
-      norm_v = global_norm_double( v, 0, l->inner_vector_size, l, NULL ); \
+      norm_v = global_norm_double( v, 0, l->inner_vector_size, l ); \
     } \
     \
     for ( *tmp_var = (kind)start_val; signum*(*tmp_var) <= signum*((kind)end_val) + EPS_double; \
@@ -55,38 +55,38 @@
         g.vt.p_end->values[_TRCKD_VAL] = *tmp_var; \
         parameter_update( l ); \
         if ( g.vt.shift_update ) \
-          shift_update( *tmp_var, l, NULL ); \
+          shift_update( *tmp_var, l ); \
         if ( g.vt.re_setup ) { \
           double t0, t1; \
           t0 = MPI_Wtime(); \
-          method_re_setup( l, NULL ); \
-          method_update( g.setup_iter[0], l, NULL ); \
+          method_re_setup( l ); \
+          method_update( g.setup_iter[0], l ); \
           t1 = MPI_Wtime();\
           if ( g.vt.p_end != NULL ) g.vt.p_end->values[_STP_TIME] += (t1-t0) / ((double)g.vt.average_over); \
         } \
         printf0("scanning variable \"%s\", value: %lf, run %d of %d\n", name, (double)(*tmp_var), i+1, g.vt.average_over ); \
         if ( g.vt.track_error ) { \
-          apply_operator_double( b, v, &(g.p), l, NULL ); \
+          apply_operator_double( b, v, &(g.p), l ); \
           vector_double_define( x, 0, 0, l->inner_vector_size, l ); \
           if ( g.vt.track_cgn_error ) { \
             ASSERT( g.method >=0 && g.p.restart_length >= 4 ); \
             vector_double_define( x, 0, 0, l->inner_vector_size, l ); \
-            cgn_double( &(g.p), l, NULL ); \
+            cgn_double( &(g.p), l ); \
             vector_double_minus( x, x, v, 0, l->inner_vector_size, l ); \
-            g.vt.p_end->values[_CGNR_ERR] += ( global_norm_double( x, 0, l->inner_vector_size, l, NULL ) / norm_v ) / ((double)g.vt.average_over); \
+            g.vt.p_end->values[_CGNR_ERR] += ( global_norm_double( x, 0, l->inner_vector_size, l ) / norm_v ) / ((double)g.vt.average_over); \
             printf0("CGN: error norm: %le\n", g.vt.p_end->values[_CGNR_ERR] ); \
             vector_double_define( x, 0, 0, l->inner_vector_size, l ); \
             } \
         } else {\
-          rhs_define( b, l, NULL );\
+          rhs_define( b, l );\
         } \
         vector_double_define( x, 0, 0, l->inner_vector_size, l ); \
-        if (g.mixed_precision==2) fgmres_MP( &(g.p_MP), l, NULL ); \
-        else fgmres_double( &(g.p), l, NULL ); \
+        if (g.mixed_precision==2) fgmres_MP( &(g.p_MP), l ); \
+        else fgmres_double( &(g.p), l ); \
         if ( i == g.vt.average_over-1 ) prof_print( l ); \
         if ( g.vt.track_error ) { \
           vector_double_minus( x, x, v, 0, l->inner_vector_size, l ); \
-          g.vt.p_end->values[_SLV_ERR] += ( global_norm_double( x, 0, l->inner_vector_size, l, NULL ) / norm_v ) / ((double)g.vt.average_over); \
+          g.vt.p_end->values[_SLV_ERR] += ( global_norm_double( x, 0, l->inner_vector_size, l ) / norm_v ) / ((double)g.vt.average_over); \
         } \
       } \
     } \

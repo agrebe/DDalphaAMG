@@ -24,7 +24,7 @@
 
 struct Thread;
   
-  void test_routine( level_struct *l, struct Thread *threading );
+  void test_routine( level_struct *l );
   
   void prof_init( level_struct *l );
   double prof_print( level_struct *l );

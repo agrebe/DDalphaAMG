@@ -160,7 +160,6 @@
   #endif
 
   #include "vectorization_control.h"
-  #include "threading.h"
 
   // enumerations
   enum { _EVEN, _ODD };

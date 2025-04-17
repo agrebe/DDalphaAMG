@@ -27,7 +27,7 @@
   void coarse_operator_PRECISION_alloc( level_struct *l );
   void coarse_operator_PRECISION_free( level_struct *l );
   void coarse_operator_PRECISION_setup( vector_PRECISION *V, level_struct *l );
-  void coarse_operator_PRECISION_set_couplings( operator_PRECISION_struct *op, level_struct *l, struct Thread *threading );
+  void coarse_operator_PRECISION_set_couplings( operator_PRECISION_struct *op, level_struct *l );
   
   void set_coarse_self_coupling_PRECISION( vector_PRECISION buffer1, vector_PRECISION buffer2,
                                            vector_PRECISION *V, const int n, level_struct *l );
@@ -41,13 +41,13 @@
   
   void coarse_gamma5_PRECISION( vector_PRECISION eta, vector_PRECISION phi, int start, int end, level_struct *l );
   void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi,
-                                        operator_PRECISION_struct *op, level_struct *l, struct Thread *threading );
+                                        operator_PRECISION_struct *op, level_struct *l );
   void g5D_apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op,
-                                            level_struct *l, struct Thread *threading );
+                                            level_struct *l );
   void apply_coarse_operator_dagger_PRECISION( vector_PRECISION eta, vector_PRECISION phi,
-                                               operator_PRECISION_struct *op, level_struct *l, struct Thread *threading );
+                                               operator_PRECISION_struct *op, level_struct *l );
   void coarse_block_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi, int start,
-                                        schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading );
+                                        schwarz_PRECISION_struct *s, level_struct *l );
   void coarse_aggregate_self_couplings_PRECISION( vector_PRECISION eta1, vector_PRECISION eta2, vector_PRECISION phi, 
                                                   schwarz_PRECISION_struct *s, level_struct *l );
 
@@ -55,7 +55,7 @@
                                                       const int mu, schwarz_PRECISION_struct *s, level_struct *l );
 
   
-  void coarse_operator_PRECISION_test_routine( level_struct *l, struct Thread *threading );
+  void coarse_operator_PRECISION_test_routine( level_struct *l );
   
   // eta += D*phi, D stored columnwise
   static inline void mv_PRECISION( const vector_PRECISION eta, const complex_PRECISION *D,

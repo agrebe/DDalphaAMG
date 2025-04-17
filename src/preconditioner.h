@@ -30,5 +30,5 @@
   #include "schwarz_double.h"
 
   void preconditioner( vector_double phi, vector_double Dphi, vector_double eta,
-                       const int res, level_struct *l, struct Thread *threading );
+                       const int res, level_struct *l );
 #endif

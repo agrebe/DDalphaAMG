@@ -29,18 +29,17 @@
                                      
   void arnoldi_step_MP( vector_float *V, vector_float *Z, vector_float w,
                         complex_double **H, complex_double* buffer, int j, void (*prec)(),
-                        complex_float shift, gmres_float_struct *p, level_struct *l,
-                        struct Thread *threading );
+                        complex_float shift, gmres_float_struct *p, level_struct *l);
                       
   void compute_solution_MP( vector_float x, vector_float *V, complex_double *y,
                             complex_double *gamma, complex_double **H, int j,
-                            gmres_float_struct *p, level_struct *l, struct Thread *threading );
+                            gmres_float_struct *p, level_struct *l );
   
   void fgmres_MP_struct_init( gmres_MP_struct *p );
   void fgmres_MP_struct_alloc( int m, int n, int vl, double tol, const int prec_kind,
                                void (*precond)(), gmres_MP_struct *p, level_struct* l );
   void fgmres_MP_struct_free( gmres_MP_struct *p );
   
-  int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading );
+  int fgmres_MP( gmres_MP_struct *p, level_struct *l );
   
 #endif

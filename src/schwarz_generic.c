@@ -1043,7 +1043,7 @@ void schwarz_PRECISION_setup( schwarz_PRECISION_struct *s, operator_double_struc
 }
 
 void additive_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRECISION eta, const int cycles, int res, 
-                                 schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
+                                 schwarz_PRECISION_struct *s, level_struct *l ) {
   
   int k, mu, i, nb = s->num_blocks;
   vector_PRECISION r = s->buf1, Dphi = s->buf4, latest_iter = s->buf2, x = s->buf3, latest_iter2 = s->buf5, swap = NULL;
@@ -1205,7 +1205,7 @@ void additive_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, v
 
 
 void red_black_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRECISION eta, const int cycles, int res,
-                                  schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
+                                  schwarz_PRECISION_struct *s, level_struct *l ) {
   
   int k=0, mu, i, init_res = res, res_comm = res, step;
   vector_PRECISION r = s->buf1;
@@ -1352,7 +1352,7 @@ void red_black_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, 
 
 
 void schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRECISION eta, const int cycles, int res,
-                        schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
+                        schwarz_PRECISION_struct *s, level_struct *l ) {
   
   int color, k, mu, i,  nb = s->num_blocks, init_res = res;
   vector_PRECISION r = s->buf1;
@@ -1537,11 +1537,11 @@ void schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRE
 
 
 void sixteen_color_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRECISION eta, const int cycles, int res, 
-                                      schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
+                                      schwarz_PRECISION_struct *s, level_struct *l ) {
   
   ASSERT( D_phi == NULL );
   
-  if ( s->num_colors == 2 ) schwarz_PRECISION( phi, D_phi, eta, cycles, res, s, l, NULL );
+  if ( s->num_colors == 2 ) schwarz_PRECISION( phi, D_phi, eta, cycles, res, s, l );
   else {
     int color, k, mu, i, nb = s->num_blocks;
     vector_PRECISION r = s->buf1, Dphi = s->buf4, latest_iter = s->buf2, x = s->buf3;
@@ -1674,7 +1674,7 @@ void sixteen_color_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_p
 }
 
 
-void trans_PRECISION( vector_PRECISION out, vector_double in, int *tt, level_struct *l, struct Thread *threading ) {
+void trans_PRECISION( vector_PRECISION out, vector_double in, int *tt, level_struct *l ) {
   
   int i, index;
   vector_PRECISION out_pt = out; vector_double in_pt = in;
@@ -1691,7 +1691,7 @@ void trans_PRECISION( vector_PRECISION out, vector_double in, int *tt, level_str
 }
 
 
-void trans_back_PRECISION( vector_double out, vector_PRECISION in, int *tt, level_struct *l, struct Thread *threading ) {
+void trans_back_PRECISION( vector_double out, vector_PRECISION in, int *tt, level_struct *l ) {
   
   int i, index;
   vector_double out_pt = out; vector_PRECISION in_pt = in;
@@ -1716,7 +1716,7 @@ void schwarz_PRECISION_def( schwarz_PRECISION_struct *s, operator_double_struct 
 }
 
 
-void schwarz_PRECISION_mvm_testfun( schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
+void schwarz_PRECISION_mvm_testfun( schwarz_PRECISION_struct *s, level_struct *l ) {
   
   int mu, i, nb = s->num_blocks;
   void (*block_op)() = (l->depth==0)?block_d_plus_clover_PRECISION:coarse_block_operator_PRECISION;
@@ -1750,7 +1750,7 @@ void schwarz_PRECISION_mvm_testfun( schwarz_PRECISION_struct *s, level_struct *l
   }
   
   vector_PRECISION_minus( v3, v3, v2, 0, l->inner_vector_size, l );  
-  norm = global_norm_PRECISION( v3, 0, l->inner_vector_size, l, NULL )/global_norm_PRECISION( v2, 0, l->inner_vector_size, l, NULL );
+  norm = global_norm_PRECISION( v3, 0, l->inner_vector_size, l )/global_norm_PRECISION( v2, 0, l->inner_vector_size, l );
   
   printf0("depth: %d, correctness of local residual vector: %le\n", l->depth, norm );
   

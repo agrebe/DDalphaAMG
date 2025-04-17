@@ -47,18 +47,18 @@ struct Thread;
   void schwarz_PRECISION_free( schwarz_PRECISION_struct *s, level_struct *l );
   
   void additive_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRECISION eta, const int cycles, int res, 
-                                   schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading );
+                                   schwarz_PRECISION_struct *s, level_struct *l );
   void red_black_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRECISION eta, const int cycles, int res,
-                                    schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading );
+                                    schwarz_PRECISION_struct *s, level_struct *l );
   void schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRECISION eta, const int cycles, int res, 
-                          schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading );
+                          schwarz_PRECISION_struct *s, level_struct *l );
   void sixteen_color_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRECISION eta, const int cycles, int res, 
-                                        schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading );
+                                        schwarz_PRECISION_struct *s, level_struct *l );
   
-  void trans_PRECISION( vector_PRECISION out, vector_double in, int *tt, level_struct *l, struct Thread *threading );
-  void trans_back_PRECISION( vector_double out, vector_PRECISION in, int *tt, level_struct *l, struct Thread *threading );
+  void trans_PRECISION( vector_PRECISION out, vector_double in, int *tt, level_struct *l );
+  void trans_back_PRECISION( vector_double out, vector_PRECISION in, int *tt, level_struct *l );
   
-  void schwarz_PRECISION_mvm_testfun( schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading );
+  void schwarz_PRECISION_mvm_testfun( schwarz_PRECISION_struct *s, level_struct *l );
   
   static inline int connect_link_PRECISION( int t, int z, int y, int x, int mu, int dir, int *dt, int *it, 
                                             schwarz_PRECISION_struct *s, level_struct *l ) {

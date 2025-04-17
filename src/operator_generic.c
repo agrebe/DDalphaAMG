@@ -231,7 +231,7 @@ void operator_PRECISION_define( operator_PRECISION_struct *op, level_struct *l )
 }
 
 
-void operator_PRECISION_test_routine( operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
+void operator_PRECISION_test_routine( operator_PRECISION_struct *op, level_struct *l ) {
 
 /*********************************************************************************
 * Checks for correctness of operator data layout by doing:
@@ -255,14 +255,14 @@ void operator_PRECISION_test_routine( operator_PRECISION_struct *op, level_struc
 
   
   vector_double_define_random( vd1, 0, l->inner_vector_size, l );
-  apply_operator_double( vd2, vd1, &(g.p), l, NULL );
+  apply_operator_double( vd2, vd1, &(g.p), l );
   
-  trans_PRECISION( vp1, vd1, op->translation_table, l, NULL );
-  apply_operator_PRECISION( vp2, vp1, &(l->p_PRECISION), l, NULL );
-  trans_back_PRECISION( vd3, vp2, op->translation_table, l, NULL );
+  trans_PRECISION( vp1, vd1, op->translation_table, l );
+  apply_operator_PRECISION( vp2, vp1, &(l->p_PRECISION), l );
+  trans_back_PRECISION( vd3, vp2, op->translation_table, l );
   
   vector_double_minus( vd4, vd3, vd2, 0, l->inner_vector_size, l );
-  diff = global_norm_double( vd4, 0, ivs, l, NULL )/global_norm_double( vd3, 0, ivs, l, NULL );
+  diff = global_norm_double( vd4, 0, ivs, l )/global_norm_double( vd3, 0, ivs, l );
   printf0("depth: 0, correctness of schwarz PRECISION Dirac operator: %le\n", diff );
 
   PUBLIC_FREE( vd1, complex_double, 4*ivs );

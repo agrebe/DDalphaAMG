@@ -24,20 +24,20 @@
 
   struct Thread;
   
-  void gamma5_PRECISION( vector_PRECISION eta, vector_PRECISION phi, level_struct *l, struct Thread *threading );
+  void gamma5_PRECISION( vector_PRECISION eta, vector_PRECISION phi, level_struct *l );
   
   void clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, config_PRECISION clover, int length,
-                         level_struct *l, struct Thread *threading );
+                         level_struct *l );
   
-  void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading );
-  void d_plus_clover_dagger_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading );
-  void g5D_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading );
-  void block_d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, int start, schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading );
+  void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l );
+  void d_plus_clover_dagger_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l );
+  void g5D_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l );
+  void block_d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, int start, schwarz_PRECISION_struct *s, level_struct *l );
   void d_plus_clover_aggregate_PRECISION( vector_PRECISION eta1, vector_PRECISION eta2, vector_PRECISION phi, schwarz_PRECISION_struct *s, level_struct *l );
   void d_neighbor_aggregate_PRECISION( vector_PRECISION eta1, vector_PRECISION eta2, vector_PRECISION phi, const int mu, schwarz_PRECISION_struct *s, level_struct *l );
   void operator_updates_PRECISION( level_struct *l );
-  void shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION shift, level_struct *l, struct Thread *threading );
-  void g5D_shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION shift, level_struct *l, struct Thread *threading );
+  void shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION shift, level_struct *l );
+  void g5D_shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION shift, level_struct *l );
   
   static inline void zero12_PRECISION( const vector_PRECISION phi ) {
     phi[ 0] = _COMPLEX_PRECISION_ZERO;
