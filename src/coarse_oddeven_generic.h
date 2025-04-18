@@ -28,7 +28,6 @@
   void coarse_perform_fwd_bwd_subs_PRECISION( vector_PRECISION x, vector_PRECISION b, config_PRECISION A, level_struct *l );
   
   void coarse_oddeven_setup_PRECISION( operator_PRECISION_struct *in, int reorder, level_struct *l );
-  void coarse_oddeven_re_setup_PRECISION( operator_PRECISION_struct *in, int reorder, level_struct *l );
   void coarse_oddeven_free_PRECISION( level_struct *l );
   
   void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECISION_struct *op, level_struct *l );

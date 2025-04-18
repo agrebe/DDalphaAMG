@@ -243,8 +243,6 @@ void method_setup( vector_double *V, level_struct *l ) {
 #ifdef DEBUG
   test_routine( l );
 #endif
-  g.mg_setup_status.gauge_updates_since_last_setup = 0;
-  g.mg_setup_status.gauge_updates_since_last_setup_update = 0;
     if ( l->depth==0 )
       prof_print( l );
 }
@@ -321,7 +319,6 @@ void method_update( int setup_iter, level_struct *l ) {
 #endif
 
     g.in_setup = 0;
-    g.mg_setup_status.gauge_updates_since_last_setup_update = 0;
       if ( l->depth==0 )
         prof_print( l );
     
@@ -882,9 +879,6 @@ void validate_parameters( int ls, level_struct *l ) {
   ASSERT( ASCENDING( -1, g.method, 5 ) );
   
   ASSERT( IMPLIES( g.vt.evaluation, g.rhs <= 2 ) );
-#ifdef _20TV
-  ASSERT( g.num_eig_vect == 20 );
-#endif
   
   for ( i=0; i<g.num_levels; i++ )
     for ( mu=0; mu<4; mu++)

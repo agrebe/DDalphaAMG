@@ -53,10 +53,10 @@
     complex_PRECISION shift;
     vector_PRECISION *buffer, prnT, prnZ, prnY, prnX, prpT, prpZ, prpY, prpX;
     comm_PRECISION_struct c;
-    OPERATOR_TYPE_PRECISION *D_vectorized;
-    OPERATOR_TYPE_PRECISION *D_transformed_vectorized;
-    OPERATOR_TYPE_PRECISION *clover_vectorized;
-    OPERATOR_TYPE_PRECISION *oe_clover_vectorized;
+    PRECISION *D_vectorized;
+    PRECISION *D_transformed_vectorized;
+    PRECISION *clover_vectorized;
+    PRECISION *oe_clover_vectorized;
   } operator_PRECISION_struct;
   
   typedef struct {

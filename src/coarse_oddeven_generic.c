@@ -329,10 +329,6 @@ void coarse_oddeven_setup_PRECISION( operator_PRECISION_struct *in, int reorder,
     l->sp_PRECISION.v_end = op->num_even_sites*l->num_lattice_site_var;
 }
 
-void coarse_oddeven_re_setup_PRECISION( operator_PRECISION_struct *in, int reorder, level_struct *l ) {
-  coarse_oddeven_setup_PRECISION_set_couplings( in, reorder, l );
-}
-
 
 void coarse_oddeven_free_PRECISION( level_struct *l ) {
   

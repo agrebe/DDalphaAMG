@@ -29,12 +29,6 @@
 #include <time.h>
 #include <stdarg.h>
 
-#include "dd_alpha_amg_setup_status.h"
-
-#ifdef JUROPA
-#include <mkl.h>
-#endif
-
 #ifndef MAIN_HEADER
   #define MAIN_HEADER
   
@@ -45,11 +39,7 @@
   #define EPS_double 1E-14
   
   #define FOR2( e ) { e e }
-  #define FOR3( e ) { e e e }
   #define FOR4( e ) { e e e e }
-  #define FOR10( e ) { e e e e e  e e e e e }
-  #define FOR20( e ) { e e e e e  e e e e e  e e e e e  e e e e e  }
-  #define FOR40( e ) { e e e e e  e e e e e  e e e e e  e e e e e  e e e e e  e e e e e  e e e e e  e e e e e }
   #define FOR6( e )  { e e e  e e e }
   #define FOR12( e ) { e e e  e e e  e e e  e e e }
   #define FOR24( e ) { e e e  e e e  e e e  e e e  e e e  e e e  e e e  e e e }
@@ -98,11 +88,6 @@
   #define HUGE_PAGE_SIZE (2 * 1024 * 1024)
   #define ROUND_UP_TO_FULL_PAGE(x) \
     (((x) + HUGE_PAGE_SIZE - 1) / HUGE_PAGE_SIZE * HUGE_PAGE_SIZE)
-  
-  
-//   void *tmppointer = (void*)(variable);
-//   posix_memalign( &tmppointer, alignment, sizeof(kind)*(length));
-//   variable = (kind*)tmppointer; }
   
   #define MALLOC_HUGEPAGES( variable, kind, length, alignment ) do { if ( variable != NULL ) { \
   printf0("malloc of \"%s\" failed: pointer is not NULL (%s:%d).\n", #variable, __FILE__, __LINE__ ); } \
@@ -158,8 +143,6 @@
   #else
   #define DEBUGOUTPUT( A, FORMAT )
   #endif
-
-  #include "vectorization_control.h"
 
   // enumerations
   enum { _EVEN, _ODD };
@@ -357,7 +340,6 @@
     complex_double **gamma, g5D_shift;
     var_table vt;
 
-    struct dd_alpha_amg_setup_status mg_setup_status;
     double mass_for_next_solve;
     
   } global_struct;

@@ -23,7 +23,6 @@
 
 void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l );
 void inv_iter_inv_fcycle_PRECISION( int setup_iter, level_struct *l );
-void testvector_analysis_PRECISION( vector_PRECISION *test_vectors, level_struct *l );
 void read_tv_from_file_PRECISION( level_struct *l );
 
 void coarse_grid_correction_PRECISION_setup( level_struct *l ) {
@@ -98,7 +97,6 @@ void iterative_PRECISION_setup( int setup_iter, level_struct *l ) {
 
   level_struct *lp = l;
   while( lp->level > 0 ) {
-    testvector_analysis_PRECISION( lp->is_PRECISION.test_vector, lp );
     lp = lp->next_level;
     if ( lp == NULL )
       break;
@@ -224,7 +222,6 @@ void interpolation_PRECISION_define( vector_double *V, level_struct *l ) {
   
   
     
-  testvector_analysis_PRECISION( l->is_PRECISION.test_vector, l );
 
   gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, n, l );
   define_interpolation_PRECISION_operator( l->is_PRECISION.interpolation, l );
@@ -249,13 +246,13 @@ void re_setup_PRECISION( level_struct *l ) {
       if ( !l->next_level->idle && l->next_level->level > 0 ) {
         schwarz_PRECISION_boundary_update( &(l->next_level->s_PRECISION), l->next_level );
         if ( g.method >= 4 && g.odd_even ) {
-          coarse_oddeven_re_setup_PRECISION( &(l->next_level->s_PRECISION.op), _REORDER, l->next_level );
+          coarse_oddeven_setup_PRECISION( &(l->next_level->s_PRECISION.op), _REORDER, l->next_level );
         } else {
           coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level );
         }
       }
       if ( !l->next_level->idle && l->next_level->level == 0 && g.odd_even ) {
-        coarse_oddeven_re_setup_PRECISION( &(l->next_level->s_PRECISION.op), _NO_REORDERING, l->next_level );
+        coarse_oddeven_setup_PRECISION( &(l->next_level->s_PRECISION.op), _NO_REORDERING, l->next_level );
       } else if ( !l->next_level->idle && l->next_level->level == 0 ) {
         coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level );
       }
@@ -316,13 +313,13 @@ void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l ) 
       if ( !l->next_level->idle && l->next_level->level > 0 ) {
         schwarz_PRECISION_boundary_update( &(l->next_level->s_PRECISION), l->next_level );
         if ( g.method >= 4 && g.odd_even ) {
-          coarse_oddeven_re_setup_PRECISION( &(l->next_level->s_PRECISION.op), _REORDER, l->next_level );
+          coarse_oddeven_setup_PRECISION( &(l->next_level->s_PRECISION.op), _REORDER, l->next_level );
         } else {
           coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level );
         }
       }
       if ( !l->next_level->idle && l->next_level->level == 0 && g.odd_even ) {
-        coarse_oddeven_re_setup_PRECISION( &(l->next_level->s_PRECISION.op), _NO_REORDERING, l->next_level );
+        coarse_oddeven_setup_PRECISION( &(l->next_level->s_PRECISION.op), _NO_REORDERING, l->next_level );
       } else if ( !l->next_level->idle && l->next_level->level == 0 ) {
         coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level );
       }
@@ -413,25 +410,3 @@ void inv_iter_inv_fcycle_PRECISION( int setup_iter, level_struct *l ) {
 }
 
 
-void testvector_analysis_PRECISION( vector_PRECISION *test_vectors, level_struct *l ) {
-#ifdef TESTVECTOR_ANALYSIS
-  if ( l->depth == 0 ) {
-    
-  complex_PRECISION lambda;
-  PRECISION mu;
-  printf0("--------------------------------------- depth: %d ----------------------------------------\n", l->depth );
-  for ( int i=0; i<l->num_eig_vect; i++ ) {
-    printf0("vector #%02d: ", i+1 );
-    apply_operator_PRECISION( l->vbuf_PRECISION[3], test_vectors[i], &(l->p_PRECISION), l, NULL );
-    coarse_gamma5_PRECISION( l->vbuf_PRECISION[0], l->vbuf_PRECISION[3], 0, l->inner_vector_size, l );
-    lambda = global_inner_product_PRECISION( test_vectors[i], l->vbuf_PRECISION[0], 0, l->inner_vector_size, l, NULL );
-    lambda /= global_inner_product_PRECISION( test_vectors[i], test_vectors[i], 0, l->inner_vector_size, l, NULL );
-    vector_PRECISION_saxpy( l->vbuf_PRECISION[1], l->vbuf_PRECISION[0], test_vectors[i], -lambda, 0, l->inner_vector_size, l );
-    mu = global_norm_PRECISION( l->vbuf_PRECISION[1], 0, l->inner_vector_size, l, NULL )/global_norm_PRECISION( test_vectors[i], 0, l->inner_vector_size, l, NULL );
-    printf0("singular value: %+lf%+lfi, singular vector precision: %le\n", (double)creal(lambda), (double)cimag(lambda), (double)mu );
-  }
-  printf0("--------------------------------------- depth: %d ----------------------------------------\n", l->depth );
-  
-  }
-#endif
-}

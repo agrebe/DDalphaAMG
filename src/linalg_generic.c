@@ -69,15 +69,9 @@ void process_multi_inner_product_PRECISION( int count, complex_PRECISION *result
       for ( i=start; i<end; )
         FOR12( results[c] += conj_PRECISION(phi[c][i])*psi[i]; i++; )
   } else {
-#ifdef _M10TV
-    for(int c=0; c<count; c++)
-      for ( i=start; i<end; )
-        FOR20( results[c] += conj_PRECISION(phi[c][i])*psi[i]; i++; )
-#else
     for(int c=0; c<count; c++)
       for ( i=start; i<end; )
         FOR2( results[c] += conj_PRECISION(phi[c][i])*psi[i]; i++; )
-#endif
   }
 
   PROF_PRECISION_STOP( _PIP, (double)(end-start)/(double)l->inner_vector_size );

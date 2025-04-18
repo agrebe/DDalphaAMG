@@ -22,17 +22,6 @@
 #ifndef LINALG_PRECISION_HEADER
   #define LINALG_PRECISION_HEADER
   
-#ifdef _M10TV
-  #define VECTOR_FOR( start, end, expression, update, l ) do{ \
-    if ( l->depth == 0 ) { \
-      for ( start; end; ) \
-        FOR12( expression; update; ) \
-    } else { \
-      for ( start; end; ) \
-        FOR20( expression; update; ) \
-    } \
-  } while(0)
-#else
   #define VECTOR_FOR( start, end, expression, update, l ) do{ \
     if ( l->depth == 0 ) { \
       for ( start; end; ) \
@@ -42,20 +31,8 @@
         FOR2( expression; update; ) \
     } \
   } while(0)
-#endif
 
 
-#ifdef _M10TV
-  #define REAL_VECTOR_FOR( start, end, expression, update, l ) do{ \
-    if ( l->depth == 0 ) { \
-      for ( start; end; ) \
-        FOR24( expression; update; ) \
-    } else { \
-      for ( start; end; ) \
-        FOR40( expression; update; ) \
-    } \
-  } while(0)
-#else
   #define REAL_VECTOR_FOR( start, end, expression, update, l ) do{ \
     if ( l->depth == 0 ) { \
       for ( start; end; ) \
@@ -65,7 +42,6 @@
         FOR4( expression; update; ) \
     } \
   } while(0)
-#endif
 
   complex_PRECISION global_inner_product_PRECISION( vector_PRECISION x, vector_PRECISION y, int start, int end, level_struct *l );
   complex_PRECISION process_inner_product_PRECISION( vector_PRECISION phi, vector_PRECISION psi, int start, int end, level_struct *l );

@@ -322,10 +322,6 @@ void vector_io( double *phi, char *filename, const int mode, level_struct *l ) {
   buffer[0].data = NULL;
   buffer[1].data = NULL;
   
-#ifdef BIG_ENDIAN_TV
-  int i;
-#endif
-  
   if ( g.my_rank == 0 ) {
     MALLOC( buffer[0].data, double, bar_size );
     MALLOC( buffer[1].data, double, bar_size );
@@ -371,11 +367,6 @@ void vector_io( double *phi, char *filename, const int mode, level_struct *l ) {
             
             if ( g.my_rank == desired_rank ) {
               MPI_Recv( phi_pt, bar_size, MPI_DOUBLE, 0, 0, g.comm_cart, MPI_STATUS_IGNORE );
-#ifdef BIG_ENDIAN_TV
-              for ( i=0; i<bar_size; i++ ) {
-                byteswap8( (char *) ( phi_pt + i ) );
-              }
-#endif
               phi_pt += bar_size;
             }
             
@@ -407,11 +398,6 @@ void vector_io( double *phi, char *filename, const int mode, level_struct *l ) {
               MPI_Irecv( buffer_pt->next->data, bar_size, MPI_DOUBLE, desired_rank, 0, g.comm_cart, &rreq );
               
               if ( ! ( t == 0 && z == 0 && y == 0 && x == 0  ) ) {
-#ifdef BIG_ENDIAN_TV
-                for ( i=0; i<bar_size; i++ ) {
-                  byteswap8( (char *) ( buffer_pt->data + i ) );
-                }
-#endif
                 fwrite( buffer_pt->data, sizeof(double), bar_size, file );
               }
               
@@ -426,11 +412,6 @@ void vector_io( double *phi, char *filename, const int mode, level_struct *l ) {
     }
           
     if ( g.my_rank == 0 ) {
-#ifdef BIG_ENDIAN_TV
-      for ( i=0; i<bar_size; i++ ) {
-        byteswap8( (char *) ( buffer_pt->data + i ) );
-      }
-#endif
       fwrite( buffer_pt->data, sizeof(double), bar_size, file );
     }
   
@@ -470,10 +451,6 @@ void vector_io_single_file( double *psi, double *lambda, char *filename, const i
   buffer[0].data = NULL;
   buffer[1].data = NULL;
 
-#ifdef BIG_ENDIAN_TV
-  int i;
-#endif
-  
   if ( g.my_rank == 0 ) {
     MALLOC( buffer[0].data, double, bar_size );
     MALLOC( buffer[1].data, double, bar_size );
@@ -524,11 +501,6 @@ void vector_io_single_file( double *psi, double *lambda, char *filename, const i
               
               if ( g.my_rank == desired_rank ) {
                 MPI_Wait( &rreq, MPI_STATUS_IGNORE );
-#ifdef BIG_ENDIAN_TV
-                for ( i=0; i<bar_size; i++ ) {
-                  byteswap8( (char *) ( phi_pt + i ) );
-                }
-#endif
                 phi_pt += bar_size;
               }
               if ( g.my_rank == 0 ) {
@@ -581,11 +553,6 @@ void vector_io_single_file( double *psi, double *lambda, char *filename, const i
               
               if ( g.my_rank == 0 ) {
                 if ( ! ( t == 0 && z == 0 && y == 0 && x == 0  ) ) {
-#ifdef BIG_ENDIAN_TV
-                  for ( i=0; i<bar_size; i++ ) {
-                    byteswap8( (char *) ( buffer_pt->data + i ) );
-                  }
-#endif
                   fwrite( buffer_pt->data, sizeof(double), bar_size, file );
                 }
               }
@@ -602,11 +569,6 @@ void vector_io_single_file( double *psi, double *lambda, char *filename, const i
             }
             
       if ( g.my_rank == 0 ) {
-        #ifdef BIG_ENDIAN_TV
-        for ( i=0; i<bar_size; i++ ) {
-          byteswap8( (char *) ( buffer_pt->data + i ) );
-        }
-        #endif
         fwrite( buffer_pt->data, sizeof(double), bar_size, file );
       }
     }
