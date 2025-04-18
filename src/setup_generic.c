@@ -245,14 +245,15 @@ void re_setup_PRECISION( level_struct *l ) {
       conf_PRECISION_gather( &(l->next_level->s_PRECISION.op), &(l->next_level->op_PRECISION), l->next_level );
       if ( !l->next_level->idle && l->next_level->level > 0 ) {
         schwarz_PRECISION_boundary_update( &(l->next_level->s_PRECISION), l->next_level );
+        coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level );
         if ( g.method >= 4 && g.odd_even ) {
-          coarse_oddeven_setup_PRECISION( &(l->next_level->s_PRECISION.op), _REORDER, l->next_level );
+          coarse_oddeven_setup_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), _REORDER, l->next_level );
         } else {
           coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level );
         }
       }
       if ( !l->next_level->idle && l->next_level->level == 0 && g.odd_even ) {
-        coarse_oddeven_setup_PRECISION( &(l->next_level->s_PRECISION.op), _NO_REORDERING, l->next_level );
+        coarse_oddeven_setup_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), _NO_REORDERING, l->next_level );
       } else if ( !l->next_level->idle && l->next_level->level == 0 ) {
         coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level );
       }
@@ -313,13 +314,13 @@ void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l ) 
       if ( !l->next_level->idle && l->next_level->level > 0 ) {
         schwarz_PRECISION_boundary_update( &(l->next_level->s_PRECISION), l->next_level );
         if ( g.method >= 4 && g.odd_even ) {
-          coarse_oddeven_setup_PRECISION( &(l->next_level->s_PRECISION.op), _REORDER, l->next_level );
+          coarse_oddeven_setup_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), _REORDER, l->next_level );
         } else {
           coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level );
         }
       }
       if ( !l->next_level->idle && l->next_level->level == 0 && g.odd_even ) {
-        coarse_oddeven_setup_PRECISION( &(l->next_level->s_PRECISION.op), _NO_REORDERING, l->next_level );
+        coarse_oddeven_setup_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), _NO_REORDERING, l->next_level );
       } else if ( !l->next_level->idle && l->next_level->level == 0 ) {
         coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level );
       }
