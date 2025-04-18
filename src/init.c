@@ -82,6 +82,7 @@ void next_level_setup( vector_double *V, level_struct *l ) {
         interpolation_float_alloc( l );
         interpolation_float_define( V, l );
         coarse_grid_correction_float_setup( l );
+        define_interpolation_float_operator( l->is_float.interpolation, l );
       }
     } else {
       if ( l->depth == 0 ) fine_level_double_alloc( l );
@@ -91,6 +92,7 @@ void next_level_setup( vector_double *V, level_struct *l ) {
         interpolation_double_alloc( l );
         interpolation_double_define( V, l );
         coarse_grid_correction_double_setup( l );
+        define_interpolation_double_operator( l->is_double.interpolation, l );
       }
     }
   }
@@ -277,12 +279,6 @@ void method_free( level_struct *l ) {
     fgmres_double_struct_free( &(g.p), l );
   }
 
-}
-
-
-void method_re_setup( level_struct *l ) {
-  method_free( l );
-  method_setup( NULL, l );
 }
 
 

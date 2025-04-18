@@ -78,6 +78,8 @@ void coarse_grid_correction_PRECISION_setup( level_struct *l ) {
       interpolation_PRECISION_define( NULL, l->next_level );
     
     coarse_grid_correction_PRECISION_setup( l->next_level );
+    if ( !l->next_level->idle )
+      define_interpolation_PRECISION_operator( l->next_level->is_PRECISION.interpolation, l->next_level );
   }
 }
 
@@ -221,7 +223,6 @@ void interpolation_PRECISION_define( vector_double *V, level_struct *l ) {
     
 
   gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, n, l );
-  define_interpolation_PRECISION_operator( l->is_PRECISION.interpolation, l );
   
 }
 
@@ -235,10 +236,8 @@ void re_setup_PRECISION( level_struct *l ) {
             0, l->num_inner_lattice_sites * l->num_lattice_site_var, l );
       }
       gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, l->num_eig_vect, l );
-      if ( l->depth > 0 )
-        gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, l->num_eig_vect, l );
-      define_interpolation_PRECISION_operator( l->is_PRECISION.interpolation, l );
       coarse_operator_PRECISION_setup( l->is_PRECISION.interpolation, l );
+      define_interpolation_PRECISION_operator( l->is_PRECISION.interpolation, l );
       conf_PRECISION_gather( &(l->next_level->s_PRECISION.op), &(l->next_level->op_PRECISION), l->next_level );
       if ( !l->next_level->idle && l->next_level->level > 0 ) {
         schwarz_PRECISION_boundary_update( &(l->next_level->s_PRECISION), l->next_level );
@@ -298,10 +297,8 @@ void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l ) 
         vector_PRECISION_copy( l->is_PRECISION.interpolation[i], l->is_PRECISION.test_vector[i],
             0, l->num_inner_lattice_sites * l->num_lattice_site_var, l );
       gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, l->num_eig_vect, l );
-      if ( l->depth > 0 )
-        gram_schmidt_on_aggregates_PRECISION( l->is_PRECISION.interpolation, l->num_eig_vect, l );
-      define_interpolation_PRECISION_operator( l->is_PRECISION.interpolation, l );
       coarse_operator_PRECISION_setup( l->is_PRECISION.interpolation, l );
+      define_interpolation_PRECISION_operator( l->is_PRECISION.interpolation, l );
       conf_PRECISION_gather( &(l->next_level->s_PRECISION.op), &(l->next_level->op_PRECISION), l->next_level );
       if ( !l->next_level->idle && l->next_level->level > 0 ) {
         schwarz_PRECISION_boundary_update( &(l->next_level->s_PRECISION), l->next_level );

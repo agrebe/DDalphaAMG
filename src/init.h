@@ -26,7 +26,6 @@ struct Thread;
 
   void method_init( int *argc, char ***argv, level_struct *l );
   void method_setup( vector_double *V, level_struct *l );
-  void method_re_setup( level_struct *l );
   void method_update( int setup_iter, level_struct *l );
   void method_free( level_struct *l );
   void method_finalize( level_struct *l );

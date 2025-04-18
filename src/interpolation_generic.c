@@ -20,6 +20,8 @@
  */
 
 #include "main.h"
+#include <fftw3.h>
+#include <assert.h>
 
 void interpolation_PRECISION_alloc( level_struct *l ) {
   
@@ -32,7 +34,7 @@ void interpolation_PRECISION_alloc( level_struct *l ) {
   MALLOC_HUGEPAGES( l->is_PRECISION.interpolation[0], complex_PRECISION, n*l->vector_size, 64 );
   for ( k=1; k<n; k++ )
     l->is_PRECISION.interpolation[k] = l->is_PRECISION.interpolation[0] + k*l->vector_size;
-  MALLOC( l->is_PRECISION.operator, complex_PRECISION, n*l->inner_vector_size );
+  l->is_PRECISION.operator = l->is_PRECISION.interpolation[0];
   l->is_PRECISION.test_vector[0] = NULL;
   MALLOC_HUGEPAGES( l->is_PRECISION.test_vector[0], complex_PRECISION, n*l->inner_vector_size, 64 );
   for ( k=1; k<n; k++ ) {
@@ -64,25 +66,30 @@ void interpolation_PRECISION_free( level_struct *l ) {
   FREE( l->is_PRECISION.test_vector, complex_PRECISION*, n );
   FREE_HUGEPAGES( l->is_PRECISION.interpolation[0], complex_PRECISION, n*l->vector_size );
   FREE( l->is_PRECISION.interpolation, complex_PRECISION*, n );
-  FREE( l->is_PRECISION.operator, complex_PRECISION, n*l->inner_vector_size );
 
 }
 
-
 void define_interpolation_PRECISION_operator( complex_PRECISION **interpolation, level_struct *l ) {
   
-  int j, num_eig_vect = l->num_eig_vect;
+  int num_eig_vect = l->num_eig_vect;
   complex_PRECISION *operator = l->is_PRECISION.operator;
 
-  int start = 0;
-  int end = l->num_inner_lattice_sites * l->num_lattice_site_var;
-      
-  operator += start*num_eig_vect;
-  for ( int i=start; i<end; i++ )
-    for ( j=0; j<num_eig_vect; j++ ) {
-      *operator = interpolation[j][i];
-      operator++;
-    }
+  int end = l->num_lattice_sites * l->num_lattice_site_var;
+  fftw_iodim howmany_dims[2];
+  howmany_dims[0].n  = num_eig_vect;
+  howmany_dims[0].is = end;
+  howmany_dims[0].os = 1;
+  howmany_dims[1].n  = end;
+  howmany_dims[1].is = 1;
+  howmany_dims[1].os = num_eig_vect;
+  fftw_plan transpose;
+  if (sizeof(PRECISION) == 8) // double-precision complex
+    transpose = fftw_plan_guru_dft(0, NULL, 2, howmany_dims, (complex double*) interpolation[0], (complex double*) operator, 0, FFTW_ESTIMATE);
+  else // single-precision complex is same size as double-precision real
+    transpose = fftw_plan_guru_r2r(0, NULL, 2, howmany_dims, (double*) (interpolation[0]), (double*) operator, NULL, FFTW_ESTIMATE);
+  assert(transpose);
+  fftw_execute(transpose);
+  fftw_destroy_plan(transpose);
 }
 
 
