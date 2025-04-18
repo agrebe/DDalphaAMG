@@ -37,7 +37,6 @@
   void d_neighbor_aggregate_PRECISION( vector_PRECISION eta1, vector_PRECISION eta2, vector_PRECISION phi, const int mu, schwarz_PRECISION_struct *s, level_struct *l );
   void operator_updates_PRECISION( level_struct *l );
   void shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION shift, level_struct *l );
-  void g5D_shift_update_PRECISION( operator_PRECISION_struct *op, complex_PRECISION shift, level_struct *l );
   
   static inline void zero12_PRECISION( const vector_PRECISION phi ) {
     phi[ 0] = _COMPLEX_PRECISION_ZERO;

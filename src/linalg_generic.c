@@ -351,22 +351,3 @@ void setup_gram_schmidt_PRECISION_compute_dots(
   }
 
 }
-
-
-void setup_gram_schmidt_PRECISION_axpys(
-    complex_PRECISION *thread_buffer, vector_PRECISION *V, int count, int offset,
-    int start, int end, level_struct *l) {
-  
-  int cache_block_size = 12*64;
-  complex_PRECISION tmp[cache_block_size];
-
-  for ( int i=start; i<end; i+=cache_block_size) {
-    for ( int j=0; j<count; j++ ) {
-      coarse_gamma5_PRECISION( tmp, V[j]+i, 0, cache_block_size, l );
-      for ( int k=0; k<cache_block_size; k++) {
-        V[count][i+k] -= thread_buffer[2*offset+j]*V[j][i+k];
-        V[count][i+k] -= thread_buffer[3*offset+j]*tmp[k];
-      }
-    }
-  }
-}

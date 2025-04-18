@@ -155,15 +155,6 @@ void dirac_setup( config_double hopp, config_double clover, level_struct *l ) {
   }
 }
 
-
-double *dirac_setup_get_gauge_pointer() {
-  return (double *)g.op_double.D;
-}
-double *dirac_setup_get_clover_pointer() {
-  return (double *)g.op_double.clover;
-}
-
-
 void mat_alloc( complex_double **A, int n )  {
   *A = NULL;
   MALLOC( (*A), complex_double, n*n );
@@ -663,26 +654,3 @@ void shift_update( complex_double shift, level_struct *l ) {
   test_routine( l );
 #endif
 }
-
-
-void g5D_shift_update( complex_double shift, level_struct *l ) {
-  
-  ASSERT(l->depth == 0);
-  g5D_shift_update_double( &(g.op_double), shift, l );
-  g5D_shift_update_float( &(g.op_float), shift, l );
-  g5D_shift_update_double( &(l->s_double.op), shift, l );
-  g5D_shift_update_float( &(l->s_float.op), shift, l );
-  
-  if ( g.mixed_precision )
-    operator_updates_float( l ); 
-  else
-    operator_updates_double( l );
-
-  g.g5D_shift = shift;
-
-#ifdef DEBUG
-  test_routine( l );
-#endif
-
-}
-

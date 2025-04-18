@@ -27,8 +27,6 @@ struct Thread;
   typedef complex_double ******SU3_storage;
 
   void dirac_setup( config_double hopp, config_double clover, level_struct *l );
-  double *dirac_setup_get_gauge_pointer();
-  double *dirac_setup_get_clover_pointer();
   
   void SU3_storage_alloc( SU3_storage *U, level_struct *l );
   void SU3_storage_free( SU3_storage *U, level_struct *l );

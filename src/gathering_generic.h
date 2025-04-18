@@ -30,6 +30,4 @@
   void vector_PRECISION_gather( vector_PRECISION gath, vector_PRECISION dist, level_struct *l );
   void vector_PRECISION_distribute( vector_PRECISION dist, vector_PRECISION gath, level_struct *l );
   
-  void distribution_PRECISION_next_level_test( level_struct *l );
-  
 #endif 

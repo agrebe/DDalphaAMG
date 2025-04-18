@@ -27,7 +27,6 @@
   void coarse_operator_PRECISION_alloc( level_struct *l );
   void coarse_operator_PRECISION_free( level_struct *l );
   void coarse_operator_PRECISION_setup( vector_PRECISION *V, level_struct *l );
-  void coarse_operator_PRECISION_set_couplings( operator_PRECISION_struct *op, level_struct *l );
   
   void set_coarse_self_coupling_PRECISION( vector_PRECISION buffer1, vector_PRECISION buffer2,
                                            vector_PRECISION *V, const int n, level_struct *l );

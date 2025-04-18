@@ -23,7 +23,5 @@
   #define LIME_IO_HEADER
 
   void lime_read_conf( double *input_data, char *input_name, double *conf_plaq );
-  void lime_read_vector( double *phi, char *filename );
-  void lime_write_vector( double *phi, char *filename );
 
 #endif

@@ -326,9 +326,6 @@ void coarse_spinwise_self_couplings_PRECISION( vector_PRECISION eta1, vector_PRE
   }
 }
 
-
-void coarse_operator_PRECISION_set_couplings( operator_PRECISION_struct *op, level_struct *l ) { }
-
 void coarse_gamma5_PRECISION( vector_PRECISION eta, vector_PRECISION phi, int start, int end, level_struct *l ) {
   
   int j, k=l->num_lattice_site_var/2;
