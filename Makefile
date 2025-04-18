@@ -1,7 +1,8 @@
 # --- COMPILER ----------------------------------------
-CC = mpicc -std=gnu99 -Wall -pedantic
+CC = mpicc -std=gnu99 -Wall -pedantic -march=native -g -no-pie
 CPP = cpp
 MAKEDEP = $(CPP) -MM
+LIMEDIR=/home/agrebe/install/qdpxx-scalar
 
 # --- DO NOT CHANGE -----------------------------------
 SRCDIR = src
@@ -22,7 +23,8 @@ OBJDB = $(patsubst %.o,%_db.o,$(OBJ))
 DEP = $(patsubst %.c,%.dep,$(GSRC))
 
 # --- FLAGS -------------------------------------------
-OPT_FLAGS = -fopenmp -DOPENMP -DSSE -msse4.2 
+OPT_FLAGS = -fopenmp -DOPENMP  -DSSE -msse4.2 
+#OPT_FLAGS = -fopenmp -DOPENMP -msse4.2 
 CFLAGS = -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING
 # -DSINGLE_ALLREDUCE_ARNOLDI
 # -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS
@@ -34,8 +36,8 @@ DEBUG_VERSION_FLAGS = $(OPT_FLAGS)
 # H5LIB=-lhdf5 -lz
 
 # --- FLAGS FOR LIME ---------------------------------
-# LIMEH=-DHAVE_LIME -I$(LIMEDIR)/include
-# LIMELIB= -L$(LIMEDIR)/lib -llime
+LIMEH=-DHAVE_LIME -I$(LIMEDIR)/include
+LIMELIB= -L$(LIMEDIR)/lib -llime -lintlc -L /opt/intel/oneapi/compiler/2023.2.0/linux/compiler/lib/intel64_lin
 
 all: wilson library documentation
 wilson: dd_alpha_amg dd_alpha_amg_db
