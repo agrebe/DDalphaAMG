@@ -89,14 +89,7 @@ int wilson_driver( vector_double solution, vector_double source, level_struct *l
 void solve( vector_double solution, vector_double source, level_struct *l ) {
   
   vector_double rhs = g.mixed_precision==2?g.p_MP.dp.b:g.p.b;
-
-  if ( g.vt.evaluation ) {
-    // this would yield different results if we threaded it, so we don't
-    vector_double_define_random( rhs, 0, l->inner_vector_size, l );
-    scan_var( &(g.vt), l );
-  } else {
-    wilson_driver( solution, source, l );
-  }
+  wilson_driver( solution, source, l );
 }
 
 

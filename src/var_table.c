@@ -65,29 +65,6 @@ void var_table_free( var_table *t ) {
 }
 
 
-void scan_var( var_table *t, level_struct *l ) {
-  
-  t->iterator = t->entry;
-  while( t->iterator != NULL  ) {
-    if ( strcmp( t->iterator->name, t->scan_var ) != 0 )
-      t->iterator = t->iterator->next;
-    else
-      break;
-  }
-  
-  if ( t->iterator == NULL ) {
-    error0("unable to scan variable \"%s\"\n", t->scan_var );
-  } else {
-    if ( strcmp( t->iterator->datatype,"int" ) == 0 )
-      SCAN_VAR( t->iterator->pt, int, t->start_val, t->end_val, t->step_size, t->multiplicative, t->iterator->name, l );
-    else
-      SCAN_VAR( t->iterator->pt, double, t->start_val, t->end_val, t->step_size, t->multiplicative, t->iterator->name, l );
-  }
-  
-  plot_table( t );
-}
-
-
 void new_plot_table_line( var_table *t ) {
   
   if ( t->p == NULL ) {
