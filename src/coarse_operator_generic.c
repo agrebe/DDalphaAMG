@@ -209,6 +209,7 @@ void coarse_block_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
   // inner block couplings
   for ( int mu=0; mu<4; mu++ ) {
     ind = index[mu]; // mu direction
+    #pragma omp parallel for
     for ( int i=0; i<length[mu]; i++ ) {
       int k = ind[i]; int j = neighbor[5*k+mu+1];
       D_pt = D + hopp_size*k + (hopp_size/4)*mu;
