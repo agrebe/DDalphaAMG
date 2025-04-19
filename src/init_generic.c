@@ -153,9 +153,6 @@ void next_level_PRECISION_free( level_struct *l ) {
 
 void level_PRECISION_init( level_struct *l ) {
 
-  for ( int i=0; i<9; i++ )
-    l->vbuf_PRECISION[i] = NULL;
-
   operator_PRECISION_init( &(l->op_PRECISION) );
   operator_PRECISION_init( &(l->oe_op_PRECISION) );
   schwarz_PRECISION_init( &(l->s_PRECISION), l );

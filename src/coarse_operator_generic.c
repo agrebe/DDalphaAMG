@@ -44,9 +44,10 @@ void coarse_operator_PRECISION_setup( vector_PRECISION *V, level_struct *l ) {
   double t0, t1;
   t0 = MPI_Wtime();
   
-  vector_PRECISION buffer1 = NULL, buffer2 = NULL;
+  vector_PRECISION buffer1 = NULL, buffer2 = NULL, mpi_buffer = NULL;
   MALLOC(buffer1, complex_PRECISION, l->vector_size);
   MALLOC(buffer2, complex_PRECISION, l->vector_size);
+  MALLOC(mpi_buffer, complex_PRECISION, l->vector_size - l->inner_vector_size);
   
   int mu, n = l->num_eig_vect, i, j,
       D_size = l->next_level->D_size,
@@ -65,7 +66,7 @@ void coarse_operator_PRECISION_setup( vector_PRECISION *V, level_struct *l ) {
   for ( i=0; i<n; i++ ) {
     for ( mu=0; mu<4; mu++ ) {
       // update ghost cells of V[i]
-      negative_sendrecv_PRECISION( V[i], mu, &(l->s_PRECISION.op.c), l );
+      negative_sendrecv_PRECISION( V[i], mu, &(l->s_PRECISION.op.c), l, mpi_buffer );
     }
     // apply self coupling of block-and-2spin-restricted dirac operator for each aggregate
     aggregate_self_coupling( buffer1, buffer2, V[i], &(l->s_PRECISION), l );
@@ -82,6 +83,7 @@ void coarse_operator_PRECISION_setup( vector_PRECISION *V, level_struct *l ) {
   }
   FREE(buffer1, complex_PRECISION, l->vector_size);
   FREE(buffer2, complex_PRECISION, l->vector_size);
+  FREE(mpi_buffer, complex_PRECISION, l->vector_size - l->inner_vector_size);
   
   t1 = MPI_Wtime();
   if ( g.print > 0 ) printf0("depth: %d, time spent for setting up next coarser operator: %lf seconds\n", l->depth, t1-t0 );

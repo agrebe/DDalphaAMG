@@ -286,8 +286,8 @@
     double real_shift;
     complex_double dirac_shift, even_shift, odd_shift;
     // buffer vectors
-    vector_float vbuf_float[9], sbuf_float[2];
-    vector_double vbuf_double[9], sbuf_double[2];
+    vector_float sbuf_float[2];
+    vector_double sbuf_double[2];
     // storage + daggered-operator bufferes
     vector_double x;
     // local solver parameters
