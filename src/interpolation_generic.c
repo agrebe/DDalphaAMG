@@ -61,11 +61,7 @@ void interpolation_PRECISION_free( level_struct *l ) {
   
   int n = l->num_eig_vect;
   
-  FREE_HUGEPAGES( l->is_PRECISION.test_vector[0], complex_PRECISION, n*l->inner_vector_size );
   FREE( l->is_PRECISION.eigenvalues, complex_PRECISION, n );
-  FREE( l->is_PRECISION.test_vector, complex_PRECISION*, n );
-  FREE_HUGEPAGES( l->is_PRECISION.interpolation[0], complex_PRECISION, n*l->vector_size );
-  FREE( l->is_PRECISION.interpolation, complex_PRECISION*, n );
   FREE( l->is_PRECISION.operator, complex_PRECISION, n*l->inner_vector_size );
 
 }
