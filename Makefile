@@ -1,5 +1,5 @@
 # --- COMPILER ----------------------------------------
-CC = mpicc -std=gnu99 -Wall -pedantic -march=native -g -no-pie
+CC = mpicc -std=gnu99 -Wall -Wno-format-overflow -pedantic -march=native -g -no-pie -I/home/agrebe/install/fftw-3.3.10/include
 CPP = cpp
 MAKEDEP = $(CPP) -MM
 LIMEDIR=/home/agrebe/install/qdpxx-scalar
@@ -37,7 +37,7 @@ DEBUG_VERSION_FLAGS = $(OPT_FLAGS)
 
 # --- FLAGS FOR LIME ---------------------------------
 LIMEH=-DHAVE_LIME -I$(LIMEDIR)/include
-LIMELIB= -L$(LIMEDIR)/lib -llime -lintlc -L /opt/intel/oneapi/compiler/2023.2.0/linux/compiler/lib/intel64_lin
+LIMELIB= -L$(LIMEDIR)/lib -llime -lintlc -L/opt/intel/oneapi/compiler/2023.2.0/linux/compiler/lib/intel64_lin -lfftw3 -L/home/agrebe/install/fftw-3.3.10/lib
 
 all: wilson library documentation
 wilson: dd_alpha_amg dd_alpha_amg_db
