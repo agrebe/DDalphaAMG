@@ -88,9 +88,14 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
       } else {
         int start = 0;
         int end   = l->num_inner_lattice_sites * l->num_lattice_site_var;
-        apply_operator_PRECISION( l->vbuf_PRECISION[2], phi, &(l->p_PRECISION), l );
-        vector_PRECISION_minus( l->vbuf_PRECISION[3], eta, l->vbuf_PRECISION[2], start, end, l );
-        restrict_PRECISION( l->next_level->p_PRECISION.b, l->vbuf_PRECISION[3], l );
+        vector_PRECISION buffer1 = NULL, buffer2 = NULL;
+        MALLOC(buffer1, complex_PRECISION, l->vector_size);
+        MALLOC(buffer2, complex_PRECISION, l->vector_size);
+        apply_operator_PRECISION( buffer1, phi, &(l->p_PRECISION), l );
+        vector_PRECISION_minus( buffer2, eta, buffer1, start, end, l );
+        restrict_PRECISION( l->next_level->p_PRECISION.b, buffer2, l );
+        FREE(buffer1, complex_PRECISION, l->vector_size);
+        FREE(buffer2, complex_PRECISION, l->vector_size);
       }
       if ( !l->next_level->idle ) {
         if ( l->depth == 0 )
