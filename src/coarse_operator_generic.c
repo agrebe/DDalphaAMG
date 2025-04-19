@@ -55,7 +55,9 @@ void coarse_operator_PRECISION_setup( vector_PRECISION *V, level_struct *l ) {
   double t0, t1;
   t0 = MPI_Wtime();
   
-  vector_PRECISION buffer1 = l->vbuf_PRECISION[4], buffer2 = l->vbuf_PRECISION[5];
+  vector_PRECISION buffer1 = NULL, buffer2 = NULL;
+  MALLOC(buffer1, complex_PRECISION, l->vector_size);
+  MALLOC(buffer2, complex_PRECISION, l->vector_size);
   
   int mu, n = l->num_eig_vect, i, j,
       D_size = l->next_level->D_size,
@@ -89,6 +91,8 @@ void coarse_operator_PRECISION_setup( vector_PRECISION *V, level_struct *l ) {
       set_coarse_neighbor_coupling_PRECISION( buffer1, buffer2, V, mu, i, l );
     }
   }
+  FREE(buffer1, complex_PRECISION, l->vector_size);
+  FREE(buffer2, complex_PRECISION, l->vector_size);
   
   t1 = MPI_Wtime();
   if ( g.print > 0 ) printf0("depth: %d, time spent for setting up next coarser operator: %lf seconds\n", l->depth, t1-t0 );
@@ -223,6 +227,7 @@ void coarse_block_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
   // inner block couplings
   for ( int mu=0; mu<4; mu++ ) {
     ind = index[mu]; // mu direction
+    #pragma omp parallel for
     for ( int i=0; i<length[mu]; i++ ) {
       int k = ind[i]; int j = neighbor[5*k+mu+1];
       D_pt = D + hopp_size*k + (hopp_size/4)*mu;
@@ -408,9 +413,12 @@ void g5D_apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION
 void apply_coarse_operator_dagger_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op,
                                              level_struct *l, struct Thread *threading ) {
   
-  coarse_gamma5_PRECISION( l->vbuf_PRECISION[3], phi, threading->start_index[l->depth], threading->end_index[l->depth], l );
-  apply_coarse_operator_PRECISION( eta, l->vbuf_PRECISION[3], op, l, threading );
+  vector_PRECISION buffer = NULL;
+  MALLOC(buffer, complex_PRECISION, l->vector_size);
+  coarse_gamma5_PRECISION( buffer, phi, threading->start_index[l->depth], threading->end_index[l->depth], l );
+  apply_coarse_operator_PRECISION( eta, buffer, op, l, threading );
   coarse_gamma5_PRECISION( eta, eta, threading->start_index[l->depth], threading->end_index[l->depth], l );
+  FREE(buffer, complex_PRECISION, l->vector_size);
 }
 
 

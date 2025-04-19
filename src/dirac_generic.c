@@ -279,9 +279,14 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
 
 
 void d_plus_clover_dagger_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {  
-  gamma5_PRECISION( l->vbuf_PRECISION[6], phi, l, threading );
-  d_plus_clover_PRECISION( l->vbuf_PRECISION[7], l->vbuf_PRECISION[6], op, l, threading );
-  gamma5_PRECISION( eta, l->vbuf_PRECISION[7], l, threading );
+  vector_PRECISION buffer1 = NULL, buffer2 = NULL;
+  MALLOC(buffer1, complex_PRECISION, l->vector_size);
+  MALLOC(buffer2, complex_PRECISION, l->vector_size);
+  gamma5_PRECISION( buffer1, phi, l, threading );
+  d_plus_clover_PRECISION( buffer2, buffer1, op, l, threading );
+  gamma5_PRECISION( eta, buffer2, l, threading );
+  FREE(buffer1, complex_PRECISION, l->vector_size);
+  FREE(buffer2, complex_PRECISION, l->vector_size);
 }
 
 

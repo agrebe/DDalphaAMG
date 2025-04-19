@@ -511,16 +511,23 @@ void testvector_analysis_PRECISION( vector_PRECISION *test_vectors, level_struct
   complex_PRECISION lambda;
   PRECISION mu;
   printf0("--------------------------------------- depth: %d ----------------------------------------\n", l->depth );
+  vector_PRECISION buffer1 = NULL, buffer2 = NULL, buffer3 = NULL;
+  MALLOC(buffer1, complex_PRECISION, l->vector_size);
+  MALLOC(buffer2, complex_PRECISION, l->vector_size);
+  MALLOC(buffer3, complex_PRECISION, l->vector_size);
   for ( int i=0; i<l->num_eig_vect; i++ ) {
     printf0("vector #%02d: ", i+1 );
-    apply_operator_PRECISION( l->vbuf_PRECISION[3], test_vectors[i], &(l->p_PRECISION), l, no_threading );
-    coarse_gamma5_PRECISION( l->vbuf_PRECISION[0], l->vbuf_PRECISION[3], 0, l->inner_vector_size, l );
-    lambda = global_inner_product_PRECISION( test_vectors[i], l->vbuf_PRECISION[0], 0, l->inner_vector_size, l, no_threading );
+    apply_operator_PRECISION( buffer1, test_vectors[i], &(l->p_PRECISION), l, no_threading );
+    coarse_gamma5_PRECISION( buffer2, buffer1, 0, l->inner_vector_size, l );
+    lambda = global_inner_product_PRECISION( test_vectors[i], buffer2, 0, l->inner_vector_size, l, no_threading );
     lambda /= global_inner_product_PRECISION( test_vectors[i], test_vectors[i], 0, l->inner_vector_size, l, no_threading );
-    vector_PRECISION_saxpy( l->vbuf_PRECISION[1], l->vbuf_PRECISION[0], test_vectors[i], -lambda, 0, l->inner_vector_size, l );
-    mu = global_norm_PRECISION( l->vbuf_PRECISION[1], 0, l->inner_vector_size, l, no_threading )/global_norm_PRECISION( test_vectors[i], 0, l->inner_vector_size, l, no_threading );
+    vector_PRECISION_saxpy( buffer3, buffer2, test_vectors[i], -lambda, 0, l->inner_vector_size, l );
+    mu = global_norm_PRECISION( buffer3, 0, l->inner_vector_size, l, no_threading )/global_norm_PRECISION( test_vectors[i], 0, l->inner_vector_size, l, no_threading );
     printf0("singular value: %+lf%+lfi, singular vector precision: %le\n", (double)creal(lambda), (double)cimag(lambda), (double)mu );
   }
+  FREE(buffer1, complex_PRECISION, l->vector_size);
+  FREE(buffer2, complex_PRECISION, l->vector_size);
+  FREE(buffer3, complex_PRECISION, l->vector_size);
   printf0("--------------------------------------- depth: %d ----------------------------------------\n", l->depth );
   
   }

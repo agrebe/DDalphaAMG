@@ -97,17 +97,10 @@ double prof_PRECISION_print( level_struct *l ) {
 
 void fine_level_PRECISION_alloc( level_struct *l ) {
 
-  int n = 8;
 #ifdef HAVE_TM1p1
-  MALLOC( l->vbuf_PRECISION[0], complex_PRECISION, 2*n*l->vector_size );
-  for ( int i=1; i<n; i++ )
-    l->vbuf_PRECISION[i] = l->vbuf_PRECISION[0] + 2*i*l->vector_size;
   MALLOC( l->p_PRECISION.b, complex_PRECISION, 2*2*l->inner_vector_size );
   l->p_PRECISION.x = l->p_PRECISION.b + 2*l->inner_vector_size;
 #else
-  MALLOC( l->vbuf_PRECISION[0], complex_PRECISION, n*l->vector_size );
-  for ( int i=1; i<n; i++ )
-    l->vbuf_PRECISION[i] = l->vbuf_PRECISION[0] + i*l->vector_size;
   MALLOC( l->p_PRECISION.b, complex_PRECISION, 2*l->inner_vector_size );
   l->p_PRECISION.x = l->p_PRECISION.b + l->inner_vector_size;
 #endif
@@ -116,18 +109,10 @@ void fine_level_PRECISION_alloc( level_struct *l ) {
 
 void fine_level_PRECISION_free( level_struct *l ) {
 
-  int n = 8;
-
 #ifdef HAVE_TM1p1
-  FREE( l->vbuf_PRECISION[0], complex_PRECISION, 2*n*l->vector_size );
-  for ( int i=1; i<n; i++ )
-    l->vbuf_PRECISION[i] = NULL;
   FREE( l->p_PRECISION.b, complex_PRECISION, 2*2*l->inner_vector_size );
   l->p_PRECISION.x = NULL;
 #else
-  FREE( l->vbuf_PRECISION[0], complex_PRECISION, n*l->vector_size );
-  for ( int i=1; i<n; i++ )
-    l->vbuf_PRECISION[i] = NULL;
   FREE( l->p_PRECISION.b, complex_PRECISION, 2*l->inner_vector_size );
   l->p_PRECISION.x = NULL;
 #endif
@@ -159,11 +144,6 @@ void next_level_PRECISION_setup( level_struct *l ) {
                                        &(l->next_level->p_PRECISION), l->next_level );
 
     }
-
-    int i, n = (l->next_level->level>0)?6:4;
-    MALLOC( l->next_level->vbuf_PRECISION[0], complex_PRECISION, n*l->next_level->vector_size );
-    for ( i=1; i<n; i++ )
-      l->next_level->vbuf_PRECISION[i] = l->next_level->vbuf_PRECISION[0] + i*l->next_level->vector_size;
   }
 }
 
@@ -174,10 +154,6 @@ void next_level_PRECISION_free( level_struct *l ) {
 
   if ( !l->idle ) {
     fgmres_PRECISION_struct_free( &(l->next_level->p_PRECISION), l->next_level );
-    int i, n = (l->next_level->level>0)?6:4;
-    for ( i=1; i<n; i++)
-      l->next_level->vbuf_PRECISION[i] = NULL;
-    FREE( l->next_level->vbuf_PRECISION[0], complex_PRECISION, n*l->next_level->vector_size );
     coarsening_index_table_PRECISION_free( &(l->is_PRECISION), l );
   }
 
