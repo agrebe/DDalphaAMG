@@ -21,7 +21,7 @@
 
 #include "main.h"
 
-void negative_sendrecv_PRECISION( vector_PRECISION phi, const int mu, comm_PRECISION_struct *c, level_struct *l ) {
+void negative_sendrecv_PRECISION( vector_PRECISION phi, const int mu, comm_PRECISION_struct *c, level_struct *l, vector_PRECISION mpi_buffer ) {
   // send dir = -1
   if( l->global_splitting[mu] > 1 ) {    
     
@@ -34,7 +34,7 @@ void negative_sendrecv_PRECISION( vector_PRECISION phi, const int mu, comm_PRECI
     for ( i=0; i<mu; i++ )
       boundary_start += c->num_boundary_sites[2*i];
 
-    buffer = l->vbuf_PRECISION[8]+n*(boundary_start-l->num_inner_lattice_sites);
+    buffer = mpi_buffer+n*(boundary_start-l->num_inner_lattice_sites);
     buffer_pt = buffer;
     
     for ( i=0; i<num_boundary_sites; i++ ) {
@@ -132,10 +132,6 @@ void ghost_alloc_PRECISION( int buffer_size, comm_PRECISION_struct *c, level_str
       MALLOC( c->buffer[2*mu+1], complex_PRECISION, buffer_size );
     }
   }
-  
-  if ( l->vbuf_PRECISION[8] == NULL ) {
-    MALLOC( l->vbuf_PRECISION[8], complex_PRECISION, l->vector_size );
-  }
 }
 
 
@@ -146,10 +142,6 @@ void ghost_free_PRECISION( comm_PRECISION_struct *c, level_struct *l ) {
   for ( mu=0; mu<4; mu++ ) {    
     FREE( c->buffer[2*mu], complex_PRECISION, c->max_length[mu] );
     FREE( c->buffer[2*mu+1], complex_PRECISION, c->max_length[mu] );
-  }
-  
-  if ( l->vbuf_PRECISION[8] != NULL ) {
-    FREE( l->vbuf_PRECISION[8], complex_PRECISION, l->vector_size );
   }
 }
 

@@ -22,7 +22,7 @@
 #ifndef GHOST_PRECISION_HEADER
   #define GHOST_PRECISION_HEADER
     
-  void negative_sendrecv_PRECISION( vector_PRECISION phi, const int mu, comm_PRECISION_struct *c, level_struct *l );
+  void negative_sendrecv_PRECISION( vector_PRECISION phi, const int mu, comm_PRECISION_struct *c, level_struct *l, vector_PRECISION mpi_buffer );
   
   // as negative_sendrecv_PRECISION, but for count vectors stored in phi in vector-fused data layout
   // buffer must be big enough to hold the surface data for count vectors (in one direction)
