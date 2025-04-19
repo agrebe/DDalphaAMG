@@ -901,9 +901,13 @@ void local_minres_PRECISION( vector_PRECISION phi, vector_PRECISION eta, vector_
   
   int i, end = (g.odd_even&&l->depth==0)?start+12*s->num_block_even_sites:start+s->block_vector_size,
       n = l->block_iter;
-  vector_PRECISION Dr = s->local_minres_buffer[0];
-  vector_PRECISION r = s->local_minres_buffer[1];
-  vector_PRECISION lphi = s->local_minres_buffer[2];
+  vector_PRECISION Dr = NULL;
+  vector_PRECISION r = NULL;
+  vector_PRECISION lphi = NULL;
+  MALLOC( Dr, complex_PRECISION, l->schwarz_vector_size );
+  MALLOC( r, complex_PRECISION, l->schwarz_vector_size );
+  MALLOC( lphi, complex_PRECISION, l->schwarz_vector_size );
+
   complex_PRECISION alpha;
   void (*block_op)() = (l->depth==0)?(g.odd_even?apply_block_schur_complement_PRECISION:block_d_plus_clover_PRECISION)
                                     :coarse_block_operator_PRECISION;
@@ -925,6 +929,10 @@ void local_minres_PRECISION( vector_PRECISION phi, vector_PRECISION eta, vector_
   if ( latest_iter != NULL ) vector_PRECISION_copy( latest_iter, lphi, start, end, l );
   if ( phi != NULL ) vector_PRECISION_plus( phi, phi, lphi, start, end, l );
   vector_PRECISION_copy( eta, r, start, end, l );
+
+  FREE( Dr, complex_PRECISION, l->schwarz_vector_size );
+  FREE( r, complex_PRECISION, l->schwarz_vector_size );
+  FREE( lphi, complex_PRECISION, l->schwarz_vector_size );
 }
 
 
