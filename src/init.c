@@ -130,40 +130,6 @@ void method_setup( vector_double *V, level_struct *l ) {
   if ( l->depth==0 )
     prof_init( l );
   
-  if ( g.method > 0 ) {
-    if ( g.mixed_precision == 2 ) {
-      fgmres_MP_struct_alloc( g.restart, g.max_restart, l->inner_vector_size,
-                              g.tol, _RIGHT, vcycle_float, &(g.p_MP), l );
-      g.p.op = &(g.op_double);
-#if defined (DEBUG) || defined (TEST_VECTOR_ANALYSIS)
-      MALLOC( g.p.b, complex_double, l->inner_vector_size );
-      MALLOC( g.p.x, complex_double, l->inner_vector_size );
-#endif
-    } else {
-      fgmres_double_struct_alloc( g.restart, g.max_restart, l->inner_vector_size, g.tol,
-                                  _GLOBAL_FGMRES, _RIGHT, preconditioner,
-                                  g.method==6?g5D_plus_clover_double:d_plus_clover_double, &(g.p), l );
-    }
-  }
-  else if ( g.method == 0 ) {
-    if ( g.mixed_precision == 2 ) {
-      fgmres_MP_struct_alloc( g.restart, g.max_restart, l->inner_vector_size,
-                              g.tol, _NOTHING, NULL, &(g.p_MP), l );
-      g.p.op = &(g.op_double);
-#if defined (DEBUG) || defined (TEST_VECTOR_ANALYSIS)
-      MALLOC( g.p.b, complex_double, l->inner_vector_size );
-      MALLOC( g.p.x, complex_double, l->inner_vector_size );
-#endif
-    } else {
-      fgmres_double_struct_alloc( g.restart, g.max_restart, l->inner_vector_size, g.tol,
-                                  _GLOBAL_FGMRES, _NOTHING, NULL, d_plus_clover_double,
-                                  &(g.p), l );
-    }
-  } else if ( g.method == -1 ) {
-    fgmres_double_struct_alloc( 4, g.restart*g.max_restart, l->inner_vector_size, g.tol,
-                                _GLOBAL_FGMRES, _NOTHING, NULL, d_plus_clover_double, &(g.p), l );
-    fine_level_double_alloc( l );
-  }
   
   if ( g.method >= 0 ) {
     t0 = MPI_Wtime();
@@ -317,8 +283,55 @@ void method_update( int setup_iter, level_struct *l ) {
     g.in_setup = 0;
       if ( l->depth==0 )
         prof_print( l );
-    
-    
+  }
+  // free memory for test vectors
+  level_struct * temp = l;
+  while (temp != NULL) {
+    int n = temp->num_eig_vect;
+    if (g.mixed_precision) {
+      FREE_HUGEPAGES( temp->is_float.test_vector[0], complex_float, n*temp->inner_vector_size );
+      FREE( temp->is_float.test_vector, complex_float*, n );
+    } else {
+      FREE_HUGEPAGES( temp->is_double.test_vector[0], complex_double, n*temp->inner_vector_size );
+      FREE( temp->is_double.test_vector, complex_double*, n );
+    }
+    temp = temp->next_level;
+  }
+
+  // initialize memory for outer solver after setup finishes
+  if ( g.method > 0 ) {
+    if ( g.mixed_precision == 2 ) {
+      fgmres_MP_struct_alloc( g.restart, g.max_restart, l->inner_vector_size,
+                              g.tol, _RIGHT, vcycle_float, &(g.p_MP), l );
+      g.p.op = &(g.op_double);
+#if defined (DEBUG) || defined (TEST_VECTOR_ANALYSIS)
+      MALLOC( g.p.b, complex_double, l->inner_vector_size );
+      MALLOC( g.p.x, complex_double, l->inner_vector_size );
+#endif
+    } else {
+      fgmres_double_struct_alloc( g.restart, g.max_restart, l->inner_vector_size, g.tol,
+                                  _GLOBAL_FGMRES, _RIGHT, preconditioner,
+                                  g.method==6?g5D_plus_clover_double:d_plus_clover_double, &(g.p), l );
+    }
+  }
+  else if ( g.method == 0 ) {
+    if ( g.mixed_precision == 2 ) {
+      fgmres_MP_struct_alloc( g.restart, g.max_restart, l->inner_vector_size,
+                              g.tol, _NOTHING, NULL, &(g.p_MP), l );
+      g.p.op = &(g.op_double);
+#if defined (DEBUG) || defined (TEST_VECTOR_ANALYSIS)
+      MALLOC( g.p.b, complex_double, l->inner_vector_size );
+      MALLOC( g.p.x, complex_double, l->inner_vector_size );
+#endif
+    } else {
+      fgmres_double_struct_alloc( g.restart, g.max_restart, l->inner_vector_size, g.tol,
+                                  _GLOBAL_FGMRES, _NOTHING, NULL, d_plus_clover_double,
+                                  &(g.p), l );
+    }
+  } else if ( g.method == -1 ) {
+    fgmres_double_struct_alloc( 4, g.restart*g.max_restart, l->inner_vector_size, g.tol,
+                                _GLOBAL_FGMRES, _NOTHING, NULL, d_plus_clover_double, &(g.p), l );
+    fine_level_double_alloc( l );
   }
 }
 
