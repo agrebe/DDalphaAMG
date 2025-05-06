@@ -214,14 +214,25 @@ void conf_PRECISION_gather( operator_PRECISION_struct *out, operator_PRECISION_s
   int send_size_hopp = l->gs_PRECISION.dist_inner_lattice_sites * 4 * SQUARE( l->num_lattice_site_var ),
       send_size_clov = l->gs_PRECISION.dist_inner_lattice_sites * ( (l->num_lattice_site_var*(l->num_lattice_site_var+1))/2 );
       
+  int i, j, n=l->gs_PRECISION.gather_list_length, s=l->num_inner_lattice_sites,
+      t, *pi = l->gs_PRECISION.permutation;
   if ( g.my_rank != l->parent_rank ) {
     MPI_Request req;
     MPI_Isend( in->D, send_size_hopp, MPI_COMPLEX_PRECISION, l->parent_rank, 0, g.comm_cart, &req );
     MPI_Send( in->clover, send_size_clov, MPI_COMPLEX_PRECISION, l->parent_rank, 1, g.comm_cart );
     MPI_Wait( &req, MPI_STATUS_IGNORE );
+  // fast path for n = 1
+  } else if (n == 1) {
+    t = (send_size_hopp*n)/s;
+    for ( i=0; i<s; i++ )
+      for ( j=0; j<t; j++ )
+        out->D[ t*pi[i] + j ] = in->D[ t*i + j ];
+    
+    t = (send_size_clov*n)/s;
+    for ( i=0; i<s; i++ )
+      for ( j=0; j<t; j++ )
+        out->clover[ t*pi[i] + j ] = in->clover[ t*i + j ];
   } else {
-    int i, j, n=l->gs_PRECISION.gather_list_length, s=l->num_inner_lattice_sites,
-        t, *pi = l->gs_PRECISION.permutation;
     vector_PRECISION buffer_hopp = NULL, buffer_clov = NULL;
     MPI_Request *hopp_reqs = NULL, *clov_reqs = NULL;
     
