@@ -59,9 +59,6 @@ void schwarz_PRECISION_init( schwarz_PRECISION_struct *s, level_struct *l ) {
   s->oe_bbuf[0] = NULL;
   s->oe_bbuf[1] = NULL;
   s->oe_buf[0] = NULL;
-  s->oe_buf[1] = NULL;
-  s->oe_buf[2] = NULL;
-  s->oe_buf[3] = NULL;
   s->local_minres_buffer[0] = NULL;
   s->block_list = NULL;
   s->block_list_length = NULL;
@@ -141,10 +138,7 @@ void schwarz_PRECISION_alloc( schwarz_PRECISION_struct *s, level_struct *l ) {
   MALLOC( s->bbuf1, complex_PRECISION, (l->depth==0&&g.odd_even?9:3)*s->block_vector_size );
 #ifndef EXTERNAL_DD
   if ( l->depth == 0 ) {
-    MALLOC( s->oe_buf[0], complex_PRECISION, 4*l->inner_vector_size );
-    s->oe_buf[1] = s->oe_buf[0] + l->inner_vector_size;
-    s->oe_buf[2] = s->oe_buf[1] + l->inner_vector_size;
-    s->oe_buf[3] = s->oe_buf[2] + l->inner_vector_size;
+    MALLOC( s->oe_buf[0], complex_PRECISION, l->inner_vector_size );
   }
 #endif
   s->bbuf2 = s->bbuf1 + s->block_vector_size;
@@ -258,10 +252,7 @@ void schwarz_PRECISION_free( schwarz_PRECISION_struct *s, level_struct *l ) {
   FREE( s->bbuf1, complex_PRECISION, (l->depth==0&&g.odd_even?9:3)*s->block_vector_size );
 #ifndef EXTERNAL_DD
   if ( l->depth == 0 ) {
-    s->oe_buf[1] = NULL;
-    s->oe_buf[2] = NULL;
-    s->oe_buf[3] = NULL;
-    FREE( s->oe_buf[0], complex_PRECISION, 4*l->inner_vector_size );
+    FREE( s->oe_buf[0], complex_PRECISION, l->inner_vector_size );
     s->oe_buf[0] = NULL;
   }
 #endif
