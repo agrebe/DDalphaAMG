@@ -1316,21 +1316,16 @@ void block_n_hopping_term_PRECISION( vector_PRECISION eta, vector_PRECISION phi,
 
 void apply_block_schur_complement_PRECISION( vector_PRECISION out, vector_PRECISION in, int start,
     schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
-
-  vector_PRECISION temp1 = NULL;
-  vector_PRECISION temp2 = NULL;
-  MALLOC( temp1, complex_PRECISION, l->inner_vector_size );
-  MALLOC( temp2, complex_PRECISION, l->inner_vector_size );
+  
+  vector_PRECISION *tmp = s->oe_buf;
   
   block_diag_ee_PRECISION( out, in, start, s, l, threading );
   START_LOCKED_MASTER(threading)
-  vector_PRECISION_define( temp1, 0, start + 12*s->num_block_even_sites, start + s->block_vector_size, l );
+  vector_PRECISION_define( tmp[0], 0, start + 12*s->num_block_even_sites, start + s->block_vector_size, l );
   END_LOCKED_MASTER(threading)
-  block_hopping_term_PRECISION( temp1, in, start, _ODD_SITES, s, l, threading );
-  block_diag_oo_inv_PRECISION( temp2, temp1, start, s, l, threading );
-  block_n_hopping_term_PRECISION( out, temp2, start, _EVEN_SITES, s, l, threading );
-  FREE( temp1, complex_PRECISION, l->inner_vector_size );
-  FREE( temp2, complex_PRECISION, l->inner_vector_size );
+  block_hopping_term_PRECISION( tmp[0], in, start, _ODD_SITES, s, l, threading );
+  block_diag_oo_inv_PRECISION( tmp[1], tmp[0], start, s, l, threading );
+  block_n_hopping_term_PRECISION( out, tmp[1], start, _EVEN_SITES, s, l, threading );
 }
 
 
@@ -1338,34 +1333,29 @@ void block_solve_oddeven_PRECISION( vector_PRECISION phi, vector_PRECISION r, ve
     int start, schwarz_PRECISION_struct *s, level_struct *l, struct Thread *threading ) {
   
   START_UNTHREADED_FUNCTION(threading)
-  vector_PRECISION temp1 = NULL;
-  vector_PRECISION temp2 = NULL;
-  MALLOC( temp1, complex_PRECISION, l->inner_vector_size );
-  MALLOC( temp2, complex_PRECISION, l->inner_vector_size );
 
+  vector_PRECISION *tmp = s->oe_buf;
   int end = start+s->block_vector_size;
   
   // odd to even
-  vector_PRECISION_copy( temp2, r, start, end, l );
+  vector_PRECISION_copy( tmp[3], r, start, end, l );
   
-  block_diag_oo_inv_PRECISION( temp1, temp2, start, s, l, no_threading );
-  block_n_hopping_term_PRECISION( temp2, temp1, start, _EVEN_SITES, s, l, no_threading );
+  block_diag_oo_inv_PRECISION( tmp[2], tmp[3], start, s, l, no_threading );
+  block_n_hopping_term_PRECISION( tmp[3], tmp[2], start, _EVEN_SITES, s, l, no_threading );
   
-  local_minres_PRECISION( NULL, temp2, temp1, start, s, l, no_threading );
+  local_minres_PRECISION( NULL, tmp[3], tmp[2], start, s, l, no_threading );
   
   // even to odd
-  block_n_hopping_term_PRECISION( temp2, temp1, start, _ODD_SITES, s, l, no_threading );
-  block_diag_oo_inv_PRECISION( temp1, temp2, start, s, l, no_threading );
+  block_n_hopping_term_PRECISION( tmp[3], tmp[2], start, _ODD_SITES, s, l, no_threading );
+  block_diag_oo_inv_PRECISION( tmp[2], tmp[3], start, s, l, no_threading );
   
   // update phi, latest_iter
-  vector_PRECISION_copy( latest_iter, temp1, start, end, l );
-  vector_PRECISION_plus( phi, phi, temp1, start, end, l );
+  vector_PRECISION_copy( latest_iter, tmp[2], start, end, l );
+  vector_PRECISION_plus( phi, phi, tmp[2], start, end, l );
   // update r
-  vector_PRECISION_copy( r, temp2, start, start+12*s->num_block_even_sites, l );
+  vector_PRECISION_copy( r, tmp[3], start, start+12*s->num_block_even_sites, l );
   vector_PRECISION_define( r, 0, start+12*s->num_block_even_sites, end, l );
 
-  FREE( temp1, complex_PRECISION, l->inner_vector_size );
-  FREE( temp2, complex_PRECISION, l->inner_vector_size );
   END_UNTHREADED_FUNCTION(threading)
 }
 

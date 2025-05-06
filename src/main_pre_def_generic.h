@@ -75,6 +75,7 @@
   typedef struct {
     operator_PRECISION_struct op;
     vector_PRECISION buf1, buf2, buf3, buf4, buf5, bbuf1, bbuf2, bbuf3, oe_bbuf[6];
+    vector_PRECISION oe_buf[4];
     vector_PRECISION local_minres_buffer[1];
     int block_oe_offset, *index[4], dir_length[4], num_blocks, num_colors,
         dir_length_even[4], dir_length_odd[4], *oe_index[4],
