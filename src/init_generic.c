@@ -96,26 +96,12 @@ double prof_PRECISION_print( level_struct *l ) {
 
 
 void fine_level_PRECISION_alloc( level_struct *l ) {
-
-#ifdef HAVE_TM1p1
-  MALLOC( l->p_PRECISION.b, complex_PRECISION, 2*2*l->inner_vector_size );
-  l->p_PRECISION.x = l->p_PRECISION.b + 2*l->inner_vector_size;
-#else
-  MALLOC( l->p_PRECISION.b, complex_PRECISION, 2*l->inner_vector_size );
-  l->p_PRECISION.x = l->p_PRECISION.b + l->inner_vector_size;
-#endif
+  MALLOC( l->p_PRECISION.x, complex_PRECISION, l->inner_vector_size );
 }
 
 
 void fine_level_PRECISION_free( level_struct *l ) {
-
-#ifdef HAVE_TM1p1
-  FREE( l->p_PRECISION.b, complex_PRECISION, 2*2*l->inner_vector_size );
-  l->p_PRECISION.x = NULL;
-#else
-  FREE( l->p_PRECISION.b, complex_PRECISION, 2*l->inner_vector_size );
-  l->p_PRECISION.x = NULL;
-#endif
+  FREE( l->p_PRECISION.x, complex_PRECISION, l->inner_vector_size );
 }
 
 
