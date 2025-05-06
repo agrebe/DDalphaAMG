@@ -440,7 +440,6 @@ void test_vector_PRECISION_update( int i, level_struct *l, struct Thread *thread
 
 void inv_iter_inv_fcycle_PRECISION( int setup_iter, level_struct *l, struct Thread *threading ) {
   
-  vector_PRECISION v_buf = NULL;
   complex_PRECISION *buffer = NULL;
   
   PUBLIC_MALLOC( buffer, complex_PRECISION, 2*l->num_eig_vect );
@@ -451,7 +450,6 @@ void inv_iter_inv_fcycle_PRECISION( int setup_iter, level_struct *l, struct Thre
   END_LOCKED_MASTER(threading)
   SYNC_MASTER_TO_ALL(threading)
   
-  PUBLIC_MALLOC( v_buf, complex_PRECISION, l->vector_size );
   
   if ( !l->idle ) {
     for ( int j=0; j<setup_iter; j++ ) {
@@ -492,7 +490,6 @@ void inv_iter_inv_fcycle_PRECISION( int setup_iter, level_struct *l, struct Thre
     }
   }
   
-  PUBLIC_FREE( v_buf, complex_PRECISION, l->vector_size );
   PUBLIC_FREE( buffer, complex_PRECISION, 2*l->num_eig_vect );
   
   if ( l->depth == 0 ) {
