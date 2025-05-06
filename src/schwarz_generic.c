@@ -63,8 +63,6 @@ void schwarz_PRECISION_init( schwarz_PRECISION_struct *s, level_struct *l ) {
   s->oe_buf[2] = NULL;
   s->oe_buf[3] = NULL;
   s->local_minres_buffer[0] = NULL;
-  s->local_minres_buffer[1] = NULL;
-  s->local_minres_buffer[2] = NULL;
   s->block_list = NULL;
   s->block_list_length = NULL;
   s->num_colors = 0;
@@ -196,8 +194,6 @@ void schwarz_PRECISION_alloc( schwarz_PRECISION_struct *s, level_struct *l ) {
   {
     // these buffers are introduced to make local_minres_PRECISION thread-safe
     MALLOC( s->local_minres_buffer[0], complex_PRECISION, l->schwarz_vector_size );
-    MALLOC( s->local_minres_buffer[1], complex_PRECISION, l->schwarz_vector_size );
-    MALLOC( s->local_minres_buffer[2], complex_PRECISION, l->schwarz_vector_size );
   }
 
 #ifdef OPTIMIZED_NEIGHBOR_COUPLING_PRECISION
@@ -289,11 +285,7 @@ void schwarz_PRECISION_free( schwarz_PRECISION_struct *s, level_struct *l ) {
 #endif
   {
     FREE( s->local_minres_buffer[0], complex_PRECISION, l->schwarz_vector_size );
-    FREE( s->local_minres_buffer[1], complex_PRECISION, l->schwarz_vector_size );
-    FREE( s->local_minres_buffer[2], complex_PRECISION, l->schwarz_vector_size );
     s->local_minres_buffer[0] = NULL;
-    s->local_minres_buffer[1] = NULL;
-    s->local_minres_buffer[2] = NULL;
   }
 #ifdef OPTIMIZED_NEIGHBOR_COUPLING_PRECISION
   if ( l->depth == 0 ) {
