@@ -337,25 +337,27 @@ void method_update( int setup_iter, level_struct *l, struct Thread *threading ) 
   START_LOCKED_MASTER(threading)
   // free memory for test vectors
   level_struct * temp = l;
-  while (temp != NULL) {
-    int n = temp->num_eig_vect;
-    if (g.mixed_precision) {
-      FREE_HUGEPAGES( temp->is_float.test_vector[0], complex_float, n*temp->inner_vector_size );
-      FREE( temp->is_float.test_vector, complex_float*, n );
-#ifndef INTERPOLATION_SETUP_LAYOUT_OPTIMIZED_float
-      FREE_HUGEPAGES( temp->is_float.interpolation[0], complex_float, n*temp->vector_size );
-      FREE( temp->is_float.interpolation, complex_float*, n );
-#endif
-    } else {
-      FREE_HUGEPAGES( temp->is_double.test_vector[0], complex_double, n*temp->inner_vector_size );
-      FREE( temp->is_double.test_vector, complex_double*, n );
-#ifndef INTERPOLATION_SETUP_LAYOUT_OPTIMIZED_double
-      FREE_HUGEPAGES( temp->is_double.interpolation[0], complex_double, n*temp->vector_size );
-      FREE( temp->is_double.interpolation, complex_double*, n );
-#endif
-    }
-    temp = temp->next_level;
-  }
+  if ( g.method > 0 )
+    if ( g.interpolation && g.num_levels > 1 )
+      while (temp != NULL) {
+        int n = temp->num_eig_vect;
+        if (g.mixed_precision) {
+          FREE_HUGEPAGES( temp->is_float.test_vector[0], complex_float, n*temp->inner_vector_size );
+          FREE( temp->is_float.test_vector, complex_float*, n );
+    #ifndef INTERPOLATION_SETUP_LAYOUT_OPTIMIZED_float
+          FREE_HUGEPAGES( temp->is_float.interpolation[0], complex_float, n*temp->vector_size );
+          FREE( temp->is_float.interpolation, complex_float*, n );
+    #endif
+        } else {
+          FREE_HUGEPAGES( temp->is_double.test_vector[0], complex_double, n*temp->inner_vector_size );
+          FREE( temp->is_double.test_vector, complex_double*, n );
+    #ifndef INTERPOLATION_SETUP_LAYOUT_OPTIMIZED_double
+          FREE_HUGEPAGES( temp->is_double.interpolation[0], complex_double, n*temp->vector_size );
+          FREE( temp->is_double.interpolation, complex_double*, n );
+    #endif
+        }
+        temp = temp->next_level;
+      }
   
   if ( g.method > 0 ) {
     if ( g.mixed_precision == 2 ) {
