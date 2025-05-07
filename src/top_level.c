@@ -122,26 +122,61 @@ void solve( vector_double solution, vector_double source, level_struct *l, struc
 
 void solve_driver( level_struct *l, struct Thread *threading ) {
   
-  vector_double solution = NULL, source = NULL;
+  vector_double source   = g.mixed_precision==2?g.p_MP.dp.b:g.p.b;
+  vector_double solution = g.mixed_precision==2?g.p_MP.dp.x:g.p.x;
   
-  START_MASTER(threading)
-  MALLOC( solution, complex_double, l->inner_vector_size );
-  MALLOC( source, complex_double, l->inner_vector_size );
-  // use threading->workspace to distribute pointer to newly allocated memory to all threads
-  ((vector_double *)threading->workspace)[0] = solution;
-  ((vector_double *)threading->workspace)[1] = source;
-  END_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
-  solution = ((vector_double *)threading->workspace)[0];
-  source   = ((vector_double *)threading->workspace)[1];
-  
-  rhs_define( source, l, threading );
-  
-  solve( solution, source, l, threading );
-
+  int Lx = g.local_lattice[0][X];
+  int Ly = g.local_lattice[0][Y];
+  int Lz = g.local_lattice[0][Z];
+  int Lt = g.local_lattice[0][T];
+  double * pion_correlator = malloc(sizeof(double) * Lt);
   START_LOCKED_MASTER(threading)
-  FREE( solution, complex_double, l->inner_vector_size );
-  FREE( source, complex_double, l->inner_vector_size );
+  for (int t = 0; t < Lt; t ++) pion_correlator[t] = 0;
   END_LOCKED_MASTER(threading)
+
+  for (int j = 0; j < 12; j ++) {
+    rhs_define( source, l, threading );
+    if ( g.my_rank == 0 ) {
+      START_LOCKED_MASTER(threading)
+      source[0] = 0;
+      source[j] = 1.0;
+      END_LOCKED_MASTER(threading)
+    }
+
+    if ( g.method == -1 ) {
+      cgn_double( &(g.p), l, threading );
+    } else if ( g.mixed_precision == 2 ) {
+      fgmres_MP( &(g.p_MP), l, threading );
+    } else {
+      fgmres_double( &(g.p), l, threading );
+    }
+
+    // compute pion correlator
+    // do this on one thread
+    START_LOCKED_MASTER(threading)
+    printf("First entry in solution: %.14e\n", creal(solution[0]));
+    double * correlator = malloc(sizeof(double) * Lt);
+    for (int t = 0; t < Lt; t ++) correlator[t] = 0;
+    for (int x = 0; x < Lx; x ++)
+      for (int y = 0; y < Ly; y ++)
+        for (int z = 0; z < Lz; z ++)
+          for (int t = 0; t < Lt; t ++) {
+            int location = ((t * Lz + z) * Ly + y) * Lx + x;
+            for (int i = 0; i < 24; i ++) {
+              double value = ((double *) solution)[location * 24 + i];
+              correlator[t] += value * value;
+              pion_correlator[t] += value * value;
+            }
+          }
+    for (int t = 0; t < Lt; t ++)
+      printf("C[%d] = %e\n", t, correlator[t]);
+    free(correlator);
+    END_LOCKED_MASTER(threading)
+  }
+  START_LOCKED_MASTER(threading)
+  for (int t = 0; t < Lt; t ++)
+    printf("C[%d] = %e\n", t, pion_correlator[t]);
+  END_LOCKED_MASTER(threading)
+  free(pion_correlator);
 }
 
