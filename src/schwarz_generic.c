@@ -50,11 +50,6 @@ void schwarz_PRECISION_init( schwarz_PRECISION_struct *s, level_struct *l ) {
   s->oe_index[T] = NULL;
   s->block = NULL;
   s->bbuf1 = NULL;
-  s->buf1 = NULL;
-  s->buf2 = NULL;
-  s->buf3 = NULL;
-  s->buf4 = NULL;
-  s->buf5 = NULL;
   l->sbuf_PRECISION[0] = NULL;
   s->oe_bbuf[0] = NULL;
   s->oe_bbuf[1] = NULL;
@@ -171,14 +166,6 @@ void schwarz_PRECISION_alloc( schwarz_PRECISION_struct *s, level_struct *l ) {
     MALLOC( s->block[i].bt, int, n );
   }
   
-  MALLOC( s->buf1, complex_PRECISION, vs+3*l->schwarz_vector_size );
-  s->buf2 = s->buf1 + vs;
-  s->buf3 = s->buf2 + l->schwarz_vector_size;
-  s->buf4 = s->buf3 + l->schwarz_vector_size;
-  
-  if ( g.method == 1 )
-    MALLOC( s->buf5, complex_PRECISION, l->schwarz_vector_size );
-  
   MALLOC( l->sbuf_PRECISION[0], complex_PRECISION, 2*vs );
   l->sbuf_PRECISION[1] = l->sbuf_PRECISION[0] + vs;
 
@@ -258,13 +245,6 @@ void schwarz_PRECISION_free( schwarz_PRECISION_struct *s, level_struct *l ) {
 #endif
   s->bbuf2 = NULL; s->bbuf3 = NULL; s->oe_bbuf[0] = NULL; s->oe_bbuf[1] = NULL;
   s->oe_bbuf[2] = NULL; s->oe_bbuf[3] = NULL; s->oe_bbuf[4] = NULL; s->oe_bbuf[5] = NULL;
-  
-  FREE( s->buf1, complex_PRECISION, vs+3*l->schwarz_vector_size );
-  s->buf2 = NULL; s->buf3 = NULL;
-  s->buf4 = NULL;
-  
-  if ( g.method == 1 )
-    FREE( s->buf5, complex_PRECISION, l->schwarz_vector_size );
   
   operator_PRECISION_free( &(s->op), _SCHWARZ, l );
   
@@ -1063,7 +1043,13 @@ void additive_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, v
   START_NO_HYPERTHREADS(threading)
   
   int k, mu, i, nb = s->num_blocks;
-  vector_PRECISION r = s->buf1, Dphi = s->buf4, latest_iter = s->buf2, x = s->buf3, latest_iter2 = s->buf5, swap = NULL;
+  vector_PRECISION r = NULL, Dphi = NULL, x = NULL, latest_iter = NULL, latest_iter2 = NULL, swap = NULL;
+  PUBLIC_MALLOC(r, complex_PRECISION, l->vector_size);
+  PUBLIC_MALLOC(latest_iter, complex_PRECISION, l->schwarz_vector_size);
+  PUBLIC_MALLOC(x, complex_PRECISION, l->schwarz_vector_size);
+  PUBLIC_MALLOC(Dphi, complex_PRECISION, l->schwarz_vector_size);
+  PUBLIC_MALLOC(latest_iter2, complex_PRECISION, l->schwarz_vector_size);
+
   void (*block_op)() = (l->depth==0)?block_d_plus_clover_PRECISION:coarse_block_operator_PRECISION,
        (*boundary_op)() = (l->depth==0)?block_PRECISION_boundary_op:coarse_block_PRECISION_boundary_op,
        (*n_boundary_op)() = (l->depth==0)?n_block_PRECISION_boundary_op:n_coarse_block_PRECISION_boundary_op,
@@ -1235,6 +1221,11 @@ void additive_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, v
   printf0("\033[0m\n"); fflush(0);
   END_LOCKED_MASTER(threading)
 #endif
+  PUBLIC_FREE(r, complex_PRECISION, l->vector_size);
+  PUBLIC_FREE(latest_iter, complex_PRECISION, l->schwarz_vector_size);
+  PUBLIC_FREE(x, complex_PRECISION, l->schwarz_vector_size);
+  PUBLIC_FREE(Dphi, complex_PRECISION, l->schwarz_vector_size);
+  PUBLIC_FREE(latest_iter2, complex_PRECISION, l->schwarz_vector_size);
 
   END_NO_HYPERTHREADS(threading)
 }
@@ -1246,10 +1237,11 @@ void red_black_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, 
   START_NO_HYPERTHREADS(threading)
   
   int k=0, mu, i, init_res = res, res_comm = res, step;
-  vector_PRECISION r = s->buf1;
-  vector_PRECISION Dphi = s->buf4;
-  vector_PRECISION latest_iter = s->buf2;
-  vector_PRECISION x = s->buf3;
+  vector_PRECISION r = NULL, Dphi = NULL, x = NULL, latest_iter = NULL;
+  PUBLIC_MALLOC(r, complex_PRECISION, l->vector_size);
+  PUBLIC_MALLOC(latest_iter, complex_PRECISION, l->schwarz_vector_size);
+  PUBLIC_MALLOC(x, complex_PRECISION, l->schwarz_vector_size);
+  PUBLIC_MALLOC(Dphi, complex_PRECISION, l->schwarz_vector_size);
   void (*block_op)() = (l->depth==0)?block_d_plus_clover_PRECISION:coarse_block_operator_PRECISION,
        (*boundary_op)() = (l->depth==0)?block_PRECISION_boundary_op:coarse_block_PRECISION_boundary_op,
        (*n_boundary_op)() = (l->depth==0)?n_block_PRECISION_boundary_op:n_coarse_block_PRECISION_boundary_op,
@@ -1410,6 +1402,10 @@ void red_black_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, 
   printf0("\033[0m\n"); fflush(0);
   END_LOCKED_MASTER(threading)
 #endif
+  PUBLIC_FREE(r, complex_PRECISION, l->vector_size);
+  PUBLIC_FREE(latest_iter, complex_PRECISION, l->schwarz_vector_size);
+  PUBLIC_FREE(x, complex_PRECISION, l->schwarz_vector_size);
+  PUBLIC_FREE(Dphi, complex_PRECISION, l->schwarz_vector_size);
   END_NO_HYPERTHREADS(threading)
 }
 
@@ -1420,10 +1416,11 @@ void schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRE
   START_NO_HYPERTHREADS(threading)
 
   int color, k, mu, i,  nb = s->num_blocks, init_res = res;
-  vector_PRECISION r = s->buf1;
-  vector_PRECISION Dphi = s->buf4;
-  vector_PRECISION latest_iter = s->buf2;
-  vector_PRECISION x = s->buf3;
+  vector_PRECISION r = NULL, Dphi = NULL, x = NULL, latest_iter = NULL;
+  PUBLIC_MALLOC(r, complex_PRECISION, l->vector_size);
+  PUBLIC_MALLOC(latest_iter, complex_PRECISION, l->schwarz_vector_size);
+  PUBLIC_MALLOC(x, complex_PRECISION, l->schwarz_vector_size);
+  PUBLIC_MALLOC(Dphi, complex_PRECISION, l->schwarz_vector_size);
   void (*block_op)() = (l->depth==0)?block_d_plus_clover_PRECISION:coarse_block_operator_PRECISION,
        (*boundary_op)() = (l->depth==0)?block_PRECISION_boundary_op:coarse_block_PRECISION_boundary_op,
        (*n_boundary_op)() = (l->depth==0)?n_block_PRECISION_boundary_op:n_coarse_block_PRECISION_boundary_op,
@@ -1628,6 +1625,10 @@ void schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRE
   END_LOCKED_MASTER(threading)
 #endif
 
+  PUBLIC_FREE(r, complex_PRECISION, l->vector_size);
+  PUBLIC_FREE(latest_iter, complex_PRECISION, l->schwarz_vector_size);
+  PUBLIC_FREE(x, complex_PRECISION, l->schwarz_vector_size);
+  PUBLIC_FREE(Dphi, complex_PRECISION, l->schwarz_vector_size);
   END_NO_HYPERTHREADS(threading)
 }
 
@@ -1641,7 +1642,11 @@ void sixteen_color_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_p
   if ( s->num_colors == 2 ) schwarz_PRECISION( phi, D_phi, eta, cycles, res, s, l, no_threading );
   else {
     int color, k, mu, i, nb = s->num_blocks;
-    vector_PRECISION r = s->buf1, Dphi = s->buf4, latest_iter = s->buf2, x = s->buf3;
+    vector_PRECISION r = NULL, Dphi = NULL, x = NULL, latest_iter = NULL;
+    PUBLIC_MALLOC(r, complex_PRECISION, l->vector_size);
+    PUBLIC_MALLOC(latest_iter, complex_PRECISION, l->schwarz_vector_size);
+    PUBLIC_MALLOC(x, complex_PRECISION, l->schwarz_vector_size);
+    PUBLIC_MALLOC(Dphi, complex_PRECISION, l->schwarz_vector_size);
     void (*block_op)() = (l->depth==0)?block_d_plus_clover_PRECISION:coarse_block_operator_PRECISION,
         (*boundary_op)() = (l->depth==0)?block_PRECISION_boundary_op:coarse_block_PRECISION_boundary_op,
         (*n_boundary_op)() = (l->depth==0)?n_block_PRECISION_boundary_op:n_coarse_block_PRECISION_boundary_op,
@@ -1781,6 +1786,10 @@ void sixteen_color_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_p
     PUBLIC_FREE( true_r, complex_PRECISION, l->vector_size );
     END_LOCKED_MASTER(threading)
 #endif
+    PUBLIC_FREE(r, complex_PRECISION, l->vector_size);
+    PUBLIC_FREE(latest_iter, complex_PRECISION, l->schwarz_vector_size);
+    PUBLIC_FREE(x, complex_PRECISION, l->schwarz_vector_size);
+    PUBLIC_FREE(Dphi, complex_PRECISION, l->schwarz_vector_size);
   }
   
   END_NO_HYPERTHREADS(threading)
