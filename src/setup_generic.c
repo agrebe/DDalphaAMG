@@ -198,8 +198,6 @@ void interpolation_PRECISION_define( vector_double *V, level_struct *l, struct T
     
   if ( V == NULL ) {
     
-    PUBLIC_MALLOC( buffer, complex_PRECISION, l->vector_size );
-    
     START_MASTER(threading)
     if ( g.print > 0 ) printf0("initial definition --- depth: %d\n", l->depth );
     if ( g.print > 0 ) { printf0("\033[0;42m\033[1;37m|"); fflush(0); }
@@ -213,23 +211,18 @@ void interpolation_PRECISION_define( vector_double *V, level_struct *l, struct T
         END_LOCKED_MASTER(threading)
 //       }
       
-      smoother_PRECISION( buffer, NULL, l->is_PRECISION.test_vector[k],
+      smoother_PRECISION( l->is_PRECISION.test_vector[k], NULL, l->is_PRECISION.test_vector[k],
                           1, _NO_RES, _NO_SHIFT, l, threading );
-      vector_PRECISION_copy( l->is_PRECISION.test_vector[k], buffer, start, end, l );
-      smoother_PRECISION( buffer, NULL, l->is_PRECISION.test_vector[k],
+      smoother_PRECISION( l->is_PRECISION.test_vector[k], NULL, l->is_PRECISION.test_vector[k],
                           g.method>=4?1:2, _NO_RES, _NO_SHIFT, l, threading );
-      vector_PRECISION_copy( l->is_PRECISION.test_vector[k], buffer, start, end, l );
-      smoother_PRECISION( buffer, NULL, l->is_PRECISION.test_vector[k],
+      smoother_PRECISION( l->is_PRECISION.test_vector[k], NULL, l->is_PRECISION.test_vector[k],
                           g.method>=4?1:3, _NO_RES, _NO_SHIFT, l, threading );
-      vector_PRECISION_copy( l->is_PRECISION.test_vector[k], buffer, start, end, l );
         
       pc += 6;
       START_MASTER(threading)
       if ( pc >= 0.2*pi*pn ) { if ( g.print > 0 ) printf0("%4d%% |", 20*pi); if ( g.my_rank == 0 ) fflush(0); pi++; }
       END_MASTER(threading)
     }
-    
-    PUBLIC_FREE( buffer, complex_PRECISION, l->vector_size );
     
     for ( k=0; k<n; k++ ) {
       vector_PRECISION_real_scale( l->is_PRECISION.test_vector[k], l->is_PRECISION.test_vector[k],

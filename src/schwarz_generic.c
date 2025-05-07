@@ -1140,13 +1140,6 @@ void additive_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, v
     res = _RES;
     swap = latest_iter; latest_iter = latest_iter2; latest_iter2 = swap;
   }
-
-  for ( i=nb_thread_start; i<nb_thread_end; i++ ) {
-    if ( l->relax_fac != 1.0 )
-      vector_PRECISION_scale( phi, x, l->relax_fac, s->block[i].start*l->num_lattice_site_var, s->block[i].start*l->num_lattice_site_var+s->block_vector_size, l );
-    else
-      vector_PRECISION_copy( phi, x, s->block[i].start*l->num_lattice_site_var, s->block[i].start*l->num_lattice_site_var+s->block_vector_size, l );
-  }
   
   // calculate D * phi with help of the almost computed residual
   if ( D_phi != NULL ) {
@@ -1187,6 +1180,14 @@ void additive_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, v
               s->block[i].start*l->num_lattice_site_var+s->block_vector_size, l );
       }
     }
+  }
+
+  SYNC_CORES(threading)
+  for ( i=nb_thread_start; i<nb_thread_end; i++ ) {
+    if ( l->relax_fac != 1.0 )
+      vector_PRECISION_scale( phi, x, l->relax_fac, s->block[i].start*l->num_lattice_site_var, s->block[i].start*l->num_lattice_site_var+s->block_vector_size, l );
+    else
+      vector_PRECISION_copy( phi, x, s->block[i].start*l->num_lattice_site_var, s->block[i].start*l->num_lattice_site_var+s->block_vector_size, l );
   }
   SYNC_CORES(threading)
   
@@ -1321,12 +1322,6 @@ void red_black_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, 
     }
   }
   
-  // copy phi = x
-  if ( l->relax_fac != 1.0 )
-    vector_PRECISION_scale( phi, x, l->relax_fac, start, end, l );
-  else
-    vector_PRECISION_copy( phi, x, start, end, l );
-  
   // calculate D * phi from r
   if ( D_phi != NULL ) {
     for ( step=4; step<8; step++ ) {
@@ -1369,6 +1364,13 @@ void red_black_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, 
       }
     }
   }
+  SYNC_CORES(threading)
+  // copy phi = x
+  if ( l->relax_fac != 1.0 )
+    vector_PRECISION_scale( phi, x, l->relax_fac, start, end, l );
+  else
+    vector_PRECISION_copy( phi, x, start, end, l );
+  
   SYNC_CORES(threading)
   
 #ifdef SCHWARZ_RES
@@ -1535,13 +1537,6 @@ void schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRE
     }
   }
   
-  for ( i=nb_thread_start; i<nb_thread_end; i++ ) {
-    if ( l->relax_fac != 1.0 )
-      vector_PRECISION_scale( phi, x, l->relax_fac, s->block[i].start*l->num_lattice_site_var, s->block[i].start*l->num_lattice_site_var+s->block_vector_size, l );
-    else
-      vector_PRECISION_copy( phi, x, s->block[i].start*l->num_lattice_site_var, s->block[i].start*l->num_lattice_site_var+s->block_vector_size, l );
-  }
-  
   // calculate D * phi with help of the almost computed residual
   // via updating the residual from odd to even
   if ( D_phi != NULL ) {
@@ -1591,6 +1586,14 @@ void schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRE
       }
     }    
   }
+  SYNC_CORES(threading)
+  for ( i=nb_thread_start; i<nb_thread_end; i++ ) {
+    if ( l->relax_fac != 1.0 )
+      vector_PRECISION_scale( phi, x, l->relax_fac, s->block[i].start*l->num_lattice_site_var, s->block[i].start*l->num_lattice_site_var+s->block_vector_size, l );
+    else
+      vector_PRECISION_copy( phi, x, s->block[i].start*l->num_lattice_site_var, s->block[i].start*l->num_lattice_site_var+s->block_vector_size, l );
+  }
+  
   SYNC_CORES(threading)
   
 #ifdef SCHWARZ_RES
@@ -1749,12 +1752,6 @@ void sixteen_color_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_p
 
     SYNC_CORES(threading)
     
-    if ( l->relax_fac != 1.0 )
-      vector_PRECISION_scale( phi, x, l->relax_fac, nb_thread_start*s->block_vector_size, nb_thread_end*s->block_vector_size, l );
-    else
-      vector_PRECISION_copy( phi, x, nb_thread_start*s->block_vector_size, nb_thread_end*s->block_vector_size, l );
-    
-    SYNC_CORES(threading)
     
 #ifdef SCHWARZ_RES
     START_LOCKED_MASTER(threading)
@@ -1786,6 +1783,12 @@ void sixteen_color_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_p
     PUBLIC_FREE( true_r, complex_PRECISION, l->vector_size );
     END_LOCKED_MASTER(threading)
 #endif
+    if ( l->relax_fac != 1.0 )
+      vector_PRECISION_scale( phi, x, l->relax_fac, nb_thread_start*s->block_vector_size, nb_thread_end*s->block_vector_size, l );
+    else
+      vector_PRECISION_copy( phi, x, nb_thread_start*s->block_vector_size, nb_thread_end*s->block_vector_size, l );
+    
+    SYNC_CORES(threading)
     PUBLIC_FREE(r, complex_PRECISION, l->vector_size);
     PUBLIC_FREE(latest_iter, complex_PRECISION, l->schwarz_vector_size);
     PUBLIC_FREE(x, complex_PRECISION, l->schwarz_vector_size);
