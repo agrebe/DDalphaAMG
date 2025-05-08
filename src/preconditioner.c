@@ -24,17 +24,34 @@
 
 void preconditioner( vector_double phi, vector_double Dphi, vector_double eta,
                       const int res, level_struct *l, struct Thread *threading ) {
+  int vs = (l->depth==0)?l->inner_vector_size:l->vector_size;
   if ( g.method == 0 )
     vector_double_copy( phi, eta, threading->start_index[l->depth], threading->end_index[l->depth], l );
   else if ( g.method < 5 || g.method == 6 || !g.odd_even ) {
     if ( g.mixed_precision ) {
+      START_LOCKED_MASTER(threading)
+      MALLOC( l->sbuf_float[0], complex_float, 2*vs );
+      l->sbuf_float[1] = l->sbuf_float[0] + vs;
+      END_LOCKED_MASTER(threading)
       trans_float( l->sbuf_float[0], eta, l->s_float.op.translation_table, l, threading );
       vcycle_float( l->sbuf_float[1], NULL, l->sbuf_float[0], res, l, threading );
       trans_back_float( phi, l->sbuf_float[1], l->s_float.op.translation_table, l, threading );
+      START_LOCKED_MASTER(threading)
+      FREE( l->sbuf_float[0], complex_float, 2*vs );
+      l->sbuf_float[1] = NULL;
+      END_LOCKED_MASTER(threading)
     } else {
+      START_LOCKED_MASTER(threading)
+      MALLOC( l->sbuf_double[0], complex_double, 2*vs );
+      l->sbuf_double[1] = l->sbuf_double[0] + vs;
+      END_LOCKED_MASTER(threading)
       trans_double( l->sbuf_double[0], eta, l->s_double.op.translation_table, l, threading );
       vcycle_double( l->sbuf_double[1], NULL, l->sbuf_double[0], res, l, threading );
       trans_back_double( phi, l->sbuf_double[1], l->s_double.op.translation_table, l, threading );
+      START_LOCKED_MASTER(threading)
+      FREE( l->sbuf_double[0], complex_double, 2*vs );
+      l->sbuf_double[1] = NULL;
+      END_LOCKED_MASTER(threading)
     }
   } else {
     if ( g.mixed_precision ) {

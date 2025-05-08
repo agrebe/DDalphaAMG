@@ -166,9 +166,6 @@ void schwarz_PRECISION_alloc( schwarz_PRECISION_struct *s, level_struct *l ) {
     MALLOC( s->block[i].bt, int, n );
   }
   
-  MALLOC( l->sbuf_PRECISION[0], complex_PRECISION, 2*vs );
-  l->sbuf_PRECISION[1] = l->sbuf_PRECISION[0] + vs;
-
 #ifdef EXTERNAL_DD
   if ( l->depth > 0 )
 #endif
@@ -247,9 +244,6 @@ void schwarz_PRECISION_free( schwarz_PRECISION_struct *s, level_struct *l ) {
   s->oe_bbuf[2] = NULL; s->oe_bbuf[3] = NULL; s->oe_bbuf[4] = NULL; s->oe_bbuf[5] = NULL;
   
   operator_PRECISION_free( &(s->op), _SCHWARZ, l );
-  
-  FREE( l->sbuf_PRECISION[0], complex_PRECISION, 2*vs );
-  l->sbuf_PRECISION[1] = NULL;
 
 #ifdef EXTERNAL_DD
   if ( l->depth > 0 )
