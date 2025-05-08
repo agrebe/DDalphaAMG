@@ -1232,11 +1232,10 @@ void red_black_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, 
   START_NO_HYPERTHREADS(threading)
   
   int k=0, mu, i, init_res = res, res_comm = res, step;
-  vector_PRECISION r = NULL, Dphi = NULL, x = NULL, latest_iter = NULL;
+  vector_PRECISION r = NULL, x = NULL, latest_iter = NULL;
   PUBLIC_MALLOC(r, complex_PRECISION, l->vector_size);
   PUBLIC_MALLOC(latest_iter, complex_PRECISION, l->schwarz_vector_size);
   PUBLIC_MALLOC(x, complex_PRECISION, l->schwarz_vector_size);
-  PUBLIC_MALLOC(Dphi, complex_PRECISION, l->schwarz_vector_size);
   void (*block_op)() = (l->depth==0)?block_d_plus_clover_PRECISION:coarse_block_operator_PRECISION,
        (*boundary_op)() = (l->depth==0)?block_PRECISION_boundary_op:coarse_block_PRECISION_boundary_op,
        (*n_boundary_op)() = (l->depth==0)?n_block_PRECISION_boundary_op:n_coarse_block_PRECISION_boundary_op,
@@ -1282,9 +1281,9 @@ void red_black_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, 
         END_MASTER(threading)
         if ( res == _RES ) {
           if ( k==0 && init_res == _RES ) {
-            block_op( Dphi, x, s->block[index].start*l->num_lattice_site_var, s, l, no_threading );
-            boundary_op( Dphi, x, index, s, l, no_threading );
-            vector_PRECISION_minus( r, eta, Dphi, s->block[index].start*l->num_lattice_site_var,
+            block_op( r, x, s->block[index].start*l->num_lattice_site_var, s, l, no_threading );
+            boundary_op( r, x, index, s, l, no_threading );
+            vector_PRECISION_minus( r, eta, r, s->block[index].start*l->num_lattice_site_var,
                                     s->block[index].start*l->num_lattice_site_var+s->block_vector_size, l );
           } else {
             n_boundary_op( r, latest_iter, index, s, l );
@@ -1401,7 +1400,6 @@ void red_black_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, 
   PUBLIC_FREE(r, complex_PRECISION, l->vector_size);
   PUBLIC_FREE(latest_iter, complex_PRECISION, l->schwarz_vector_size);
   PUBLIC_FREE(x, complex_PRECISION, l->schwarz_vector_size);
-  PUBLIC_FREE(Dphi, complex_PRECISION, l->schwarz_vector_size);
   END_NO_HYPERTHREADS(threading)
 }
 
