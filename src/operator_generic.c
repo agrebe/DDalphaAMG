@@ -101,8 +101,13 @@ void operator_PRECISION_alloc( operator_PRECISION_struct *op, const int type, le
   nls = (type==_ORDINARY)?l->num_inner_lattice_sites:2*l->num_lattice_sites-l->num_inner_lattice_sites;
   MALLOC( op->D, complex_PRECISION, coupling_site_size*nls );
   MALLOC( op->clover, complex_PRECISION, clover_site_size*l->num_inner_lattice_sites );
-  if ( type == _SCHWARZ && l->depth == 0 && g.odd_even )
-    MALLOC( op->oe_clover, complex_PRECISION, clover_site_size*l->num_inner_lattice_sites );
+  // only allocate oe_clover if we don't use SSE or g.csw == 0
+  if ( type == _SCHWARZ && l->depth == 0 && g.odd_even ) {
+#ifdef SSE
+    if ( !(g.csw) )
+#endif
+      MALLOC( op->oe_clover, complex_PRECISION, clover_site_size*l->num_inner_lattice_sites );
+  }
   MALLOC( op->index_table, int, its );
   MALLOC( op->neighbor_table, int, (l->depth==0?4:5)*l->num_inner_lattice_sites );
   MALLOC( op->backward_neighbor_table, int, (l->depth==0?4:5)*l->num_inner_lattice_sites );
@@ -162,8 +167,12 @@ void operator_PRECISION_free( operator_PRECISION_struct *op, const int type, lev
   int nls = (type==_ORDINARY)?l->num_inner_lattice_sites:2*l->num_lattice_sites-l->num_inner_lattice_sites;
   FREE( op->D, complex_PRECISION, coupling_site_size*nls );
   FREE( op->clover, complex_PRECISION, clover_site_size*l->num_inner_lattice_sites );
-  if ( type == _SCHWARZ && l->depth == 0 && g.odd_even )
-    FREE( op->oe_clover, complex_PRECISION, clover_site_size*l->num_inner_lattice_sites );
+  if ( type == _SCHWARZ && l->depth == 0 && g.odd_even ) {
+#ifdef SSE
+    if ( !(g.csw) )
+#endif
+      FREE( op->oe_clover, complex_PRECISION, clover_site_size*l->num_inner_lattice_sites );
+  }
   FREE( op->index_table, int, its );
   FREE( op->neighbor_table, int, (l->depth==0?4:5)*l->num_inner_lattice_sites );
   FREE( op->backward_neighbor_table, int, (l->depth==0?4:5)*l->num_inner_lattice_sites );

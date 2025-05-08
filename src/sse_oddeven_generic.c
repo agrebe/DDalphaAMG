@@ -165,7 +165,6 @@ void block_diag_ee_PRECISION( vector_PRECISION eta, vector_PRECISION phi,
   START_UNTHREADED_FUNCTION(threading)
   PRECISION *clover_vectorized = s->op.oe_clover_vectorized + (start/12)*144;  
   int i, n1 = s->num_block_even_sites;
-  config_PRECISION clover = (g.csw==0.0)?s->op.oe_clover+start:s->op.oe_clover+(start/12)*42;
   vector_PRECISION lphi = phi+start, leta = eta+start;
   // diagonal blocks applied to the even sites of a block
   if ( g.csw ) {
@@ -174,6 +173,7 @@ void block_diag_ee_PRECISION( vector_PRECISION eta, vector_PRECISION phi,
       leta+=12; lphi+=12; clover_vectorized+=144;
     }
   } else {
+    config_PRECISION clover = (g.csw==0.0)?s->op.oe_clover+start:s->op.oe_clover+(start/12)*42;
     for ( i=0; i<12*n1; i++ )
       leta[i] = lphi[i]*clover[i];
   }
@@ -189,12 +189,12 @@ void block_diag_oo_PRECISION( vector_PRECISION eta, vector_PRECISION phi,
   START_UNTHREADED_FUNCTION(threading)
 
   int i, n1 = s->num_block_even_sites, n2 = s->num_block_odd_sites;
-  config_PRECISION clover = (g.csw==0.0)?s->op.oe_clover+start:s->op.oe_clover+(start/12)*42;
   vector_PRECISION lphi = phi+start, leta = eta+start;
   // diagonal blocks applied to the odd sites of a block
   if ( g.csw ) {
     error0("block_diag_oo_PRECISION is not available when using SSE\n");
   } else {
+    config_PRECISION clover = (g.csw==0.0)?s->op.oe_clover+start:s->op.oe_clover+(start/12)*42;
     leta += n1*12; lphi += n1*12; clover += n1*12;
     for ( i=0; i<12*n2; i++ )
       leta[i] = lphi[i]*clover[i];
@@ -211,7 +211,6 @@ void block_diag_oo_inv_PRECISION( vector_PRECISION eta, vector_PRECISION phi,
   START_UNTHREADED_FUNCTION(threading)
   PRECISION *clover_vectorized = s->op.oe_clover_vectorized + (start/12)*144;
   int i, n1 = s->num_block_even_sites, n2 = s->num_block_odd_sites;
-  config_PRECISION clover = (g.csw==0.0)?s->op.oe_clover+start:s->op.oe_clover+(start/12)*42;
   vector_PRECISION lphi = phi+start, leta = eta+start;
   // inverted diagonal blocks applied to the odd sites of a block
   if ( g.csw ) {
@@ -221,6 +220,7 @@ void block_diag_oo_inv_PRECISION( vector_PRECISION eta, vector_PRECISION phi,
       leta+=12; lphi+=12; clover_vectorized+=144;
     }
   } else {
+    config_PRECISION clover = (g.csw==0.0)?s->op.oe_clover+start:s->op.oe_clover+(start/12)*42;
     leta += n1*12; lphi += n1*12; clover += n1*12;
     for ( i=0; i<12*n2; i++ )
       leta[i] = lphi[i]/clover[i];
