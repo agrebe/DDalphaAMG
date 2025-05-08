@@ -76,7 +76,8 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
   total += (m+1)*m; // Hessenberg matrix
   MALLOC( p->H, complex_PRECISION*, m );
   
-  total += (5+m)*vl; // x, r, b, w, V
+  // 1 less than before since r = V[0]
+  total += (4+m)*vl; // x, r, b, w, V
   MALLOC( p->V, complex_PRECISION*, m+1 );
   
   if ( precond != NULL ) {
@@ -135,8 +136,8 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
 
   // x
   p->x = p->H[0] + total; total += vl;
-  // r
-  p->r = p->H[0] + total; total += vl;
+  // r (reusing V[0])
+  p->r = p->V[0];
   // b
   p->b = p->H[0] + total; total += vl;
   
@@ -433,7 +434,7 @@ void bicgstab_PRECISION( gmres_PRECISION_struct *ps, level_struct *l, struct Thr
   
   tol = (l->level==0 && g.num_levels > 1 && g.interpolation )?g.coarse_tol:g.bicgstab_tol;
   maxiter = 1000000; r = ps->r; b = ps->b; x = ps->x; p = ps->w;
-  pp = ps->V[0]; r_tilde = ps->V[1]; v = ps->V[2]; s = ps->V[3]; t = ps->V[4];
+  pp = ps->V[5]; r_tilde = ps->V[1]; v = ps->V[2]; s = ps->V[3]; t = ps->V[4];
   
   vector_PRECISION_copy( r, b, start, end, l );
   vector_PRECISION_copy( r_tilde, b, start, end, l );
